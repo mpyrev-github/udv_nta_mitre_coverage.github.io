@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UDV NTA — покрытие матрицы MITRE ATT&amp;CK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+        --bg-page: #f4f1ea;
+        --bg-surface: #ffffff;
+        --bg-hero: #0b2027;
+        --bg-hero-deep: #0c0c0c;
+        --text-on-light: #171717;
+        --text-on-light-muted: #6b6b6b;
+        --text-on-dark: #f5f2ec;
+        --text-on-dark-muted: #9e9b93;
+        --divider-light: #e5e1d8;
+        --divider-dark: #2a2a2a;
+
+        --cov-sig-bg: #d6e7c8;
+        --cov-sig-border: #6b8e3c;
+        --cov-sig-text: #2d4016;
+        --cov-sig-accent: #8aaf54;
+
+        --cov-nsig-bg: #d7dcea;
+        --cov-nsig-border: #4a5a96;
+        --cov-nsig-text: #1e264a;
+        --cov-nsig-accent: #6677b8;
+
+        --cov-part-bg: #f0e4a8;
+        --cov-part-border: #b08c20;
+        --cov-part-text: #3d2f08;
+        --cov-part-accent: #d4ab35;
+
+        --cov-none-bg: #ebe7dd;
+        --cov-none-border: #c9c3b5;
+        --cov-none-text: #6a665c;
+    }
+
+    html, body {
+        background: var(--bg-page);
+        color: var(--text-on-light);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* HERO */
+    .hero {
+        background: var(--bg-hero);
+        color: var(--text-on-dark);
+        padding: 40px 48px 80px;
+    }
+    .hero-top {
+        display: flex; align-items: center; justify-content: space-between;
+        padding-bottom: 36px; border-bottom: 1px solid var(--divider-dark);
+        margin-bottom: 56px;
+        font-size: 13px; color: var(--text-on-dark-muted);
+    }
+    .brand { font-weight: 700; font-size: 18px; color: var(--text-on-dark); letter-spacing: -0.01em; }
+    .breadcrumb { display: flex; gap: 6px; align-items: center; }
+    .breadcrumb span + span::before { content: "/"; margin-right: 6px; opacity: 0.5; }
+    .breadcrumb .crumb-current { color: var(--text-on-dark); }
+    .breadcrumb a { color: inherit; text-decoration: none; }
+    .breadcrumb a:hover { color: var(--text-on-dark); }
+    .hero-tag { font-size: 13px; color: var(--text-on-dark-muted); margin-bottom: 18px; }
+    h1 {
+        font-size: 72px; font-weight: 700; letter-spacing: -0.035em;
+        line-height: 0.98; margin-bottom: 28px; max-width: 1100px;
+    }
+    h1 .soft { color: var(--text-on-dark-muted); font-weight: 400; }
+    .hero-lead {
+        color: var(--text-on-dark-muted); font-size: 17px;
+        max-width: 780px; line-height: 1.55;
+    }
+
+    /* COVERAGE BANNER */
+    .coverage-banner {
+        margin: -50px 48px 0;
+        background: var(--bg-surface);
+        border-radius: 24px;
+        padding: 40px 44px;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 56px;
+        align-items: center;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 24px 48px -24px rgba(0,0,0,0.12);
+        position: relative;
+        z-index: 2;
+    }
+    .coverage-banner-left { display: flex; flex-direction: column; gap: 6px; }
+    .section-tag {
+        font-size: 13px; color: var(--text-on-light-muted);
+        text-transform: lowercase; margin-bottom: 4px;
+    }
+    .coverage-banner-num {
+        font-size: 140px; font-weight: 800;
+        line-height: 0.9; letter-spacing: -0.055em;
+        color: var(--text-on-light);
+        display: flex; align-items: flex-start;
+    }
+    .coverage-banner-num .pct {
+        font-size: 48px; font-weight: 500;
+        color: var(--text-on-light-muted);
+        margin-top: 14px; margin-left: 6px;
+        letter-spacing: -0.01em;
+    }
+    .coverage-banner-sub {
+        font-size: 15px; color: var(--text-on-light-muted); margin-top: 8px;
+    }
+    .coverage-banner-stats {
+        display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    }
+    .stat {
+        display: flex; flex-direction: column; gap: 6px;
+        padding: 18px 20px;
+        background: var(--bg-page);
+        border-radius: 14px;
+        position: relative;
+    }
+    .stat-num-label {
+        font-size: 11px; font-weight: 600; color: var(--text-on-light-muted);
+    }
+    .stat-label {
+        font-size: 13px; color: var(--text-on-light-muted);
+        line-height: 1.35; font-weight: 400;
+    }
+    .stat-value {
+        font-size: 36px; font-weight: 700;
+        letter-spacing: -0.03em; color: var(--text-on-light); line-height: 1;
+    }
+    .stat-value .frac {
+        font-size: 20px; font-weight: 400; color: var(--text-on-light-muted);
+    }
+    .stat .stat-dot {
+        width: 10px; height: 10px; border-radius: 50%;
+        position: absolute; top: 22px; right: 20px;
+    }
+    .stat.stat-sig .stat-dot { background: var(--cov-sig-border); }
+    .stat.stat-nsig .stat-dot { background: var(--cov-nsig-border); }
+    .stat.stat-part .stat-dot { background: var(--cov-part-border); }
+    .stat.stat-total .stat-dot { background: #171717; }
+
+    /* LEGEND SECTION */
+    .legend-section { padding: 72px 48px 32px; }
+    .section-head {
+        display: flex; align-items: baseline; gap: 20px; margin-bottom: 32px;
+    }
+    .section-head .section-num {
+        font-size: 14px; font-weight: 700;
+        color: var(--text-on-light-muted); min-width: 30px;
+    }
+    .section-head .section-title-block {
+        display: flex; flex-direction: column; gap: 4px;
+    }
+    .section-head h2 {
+        font-size: 36px; font-weight: 700;
+        letter-spacing: -0.025em; line-height: 1.1;
+        color: var(--text-on-light);
+    }
+    .legend-cards {
+        display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    }
+    .legend-card {
+        padding: 24px; border-radius: 18px;
+        min-height: 140px;
+        display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .legend-card.sig { background: var(--cov-sig-bg); color: var(--cov-sig-text); }
+    .legend-card.nsig { background: var(--cov-nsig-bg); color: var(--cov-nsig-text); }
+    .legend-card.part { background: var(--cov-part-bg); color: var(--cov-part-text); }
+    .legend-card.none { background: var(--cov-none-bg); color: var(--cov-none-text); }
+    .legend-card-head {
+        font-size: 11px; font-weight: 700;
+        letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.7;
+    }
+    .legend-card-title {
+        font-size: 20px; font-weight: 600;
+        letter-spacing: -0.01em; line-height: 1.2; margin-top: 4px;
+    }
+    .legend-card-body { font-size: 13px; line-height: 1.45; opacity: 0.85; }
+
+    /* MATRIX */
+    .matrix-section { padding: 32px 48px 80px; }
+    .matrix-wrap {
+        overflow-x: auto;
+        background: var(--bg-surface);
+        border-radius: 24px;
+        padding: 28px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .matrix { display: flex; gap: 10px; min-width: max-content; }
+    .tactic-col {
+        min-width: 260px; max-width: 260px;
+        display: flex; flex-direction: column; gap: 6px;
+    }
+    .tactic-header {
+        padding: 18px 16px;
+        background: var(--bg-hero);
+        color: var(--text-on-dark);
+        border-radius: 14px;
+        position: sticky; top: 0; z-index: 2;
+        display: flex; flex-direction: column; gap: 6px;
+        min-height: 140px;
+    }
+    .tactic-num {
+        font-size: 11px; font-weight: 700;
+        color: var(--text-on-dark-muted); letter-spacing: 0.08em;
+    }
+    .tactic-meta {
+        display: flex; justify-content: space-between;
+        align-items: baseline; gap: 8px;
+    }
+    .tactic-id {
+        font-size: 10px; font-weight: 600;
+        letter-spacing: 0.12em; color: var(--text-on-dark-muted);
+    }
+    .tactic-name-en { font-size: 10px; color: var(--text-on-dark-muted); }
+    .tactic-name-ru {
+        font-size: 18px; font-weight: 700;
+        letter-spacing: -0.015em; line-height: 1.15;
+        margin-top: 4px; color: var(--text-on-dark);
+    }
+    .tactic-count {
+        font-size: 11px; color: var(--text-on-dark-muted); margin-top: auto;
+    }
+    .tactic-body { display: flex; flex-direction: column; gap: 6px; }
+
+    .tech {
+        padding: 11px 13px; border-radius: 10px;
+        background: var(--cov-none-bg); color: var(--cov-none-text);
+        transition: transform 0.12s ease, box-shadow 0.12s ease;
+        cursor: default; border: 1px solid transparent;
+    }
+    .tech:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.10);
+    }
+    .tech-header {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 6px; margin-bottom: 3px;
+    }
+    .tech-id {
+        font-size: 10px; font-weight: 700;
+        letter-spacing: 0.06em; opacity: 0.65;
+    }
+    .sub-badge {
+        font-size: 10px; padding: 2px 7px;
+        border-radius: 10px; font-weight: 700;
+        background: rgba(0,0,0,0.08);
+    }
+    .tech-name {
+        font-size: 13px; font-weight: 600;
+        line-height: 1.3; letter-spacing: -0.005em;
+    }
+    .subs {
+        margin-top: 10px; display: flex; flex-direction: column; gap: 3px;
+        padding-left: 8px; border-left: 2px solid rgba(0,0,0,0.08);
+    }
+    .sub-tech {
+        padding: 6px 8px; border-radius: 6px;
+        background: var(--cov-none-bg); color: var(--cov-none-text);
+        font-size: 11px; line-height: 1.3;
+        display: flex; gap: 6px; align-items: baseline;
+    }
+    .sub-id {
+        font-weight: 700; font-size: 9.5px;
+        letter-spacing: 0.04em; opacity: 0.7; white-space: nowrap;
+    }
+    .sub-name { flex: 1; font-weight: 500; }
+
+    .cov-sig { background: var(--cov-sig-bg); color: var(--cov-sig-text); }
+    .cov-nsig { background: var(--cov-nsig-bg); color: var(--cov-nsig-text); }
+    .cov-part { background: var(--cov-part-bg); color: var(--cov-part-text); }
+    .cov-none { background: var(--cov-none-bg); color: var(--cov-none-text); }
+
+    /* FOOTER */
+    .footer {
+        background: var(--bg-hero);
+        color: var(--text-on-dark-muted);
+        padding: 56px 48px 40px;
+        font-size: 13px;
+    }
+    .footer-grid {
+        display: grid; grid-template-columns: 2fr 1fr 1fr;
+        gap: 48px; align-items: start;
+    }
+    .footer-main { max-width: 600px; }
+    .footer-main p + p { margin-top: 10px; }
+    .footer a {
+        color: var(--text-on-dark); text-decoration: underline;
+        text-decoration-color: var(--text-on-dark-muted);
+        text-underline-offset: 3px;
+    }
+    .footer-col-title {
+        color: var(--text-on-dark); font-weight: 600;
+        margin-bottom: 10px; font-size: 13px;
+    }
+    .footer-col ul { list-style: none; }
+    .footer-col li { margin-bottom: 6px; }
+    .footer-bottom {
+        margin-top: 56px; padding-top: 24px;
+        border-top: 1px solid var(--divider-dark);
+        font-size: 12px;
+    }
+
+    ::-webkit-scrollbar { height: 10px; width: 10px; }
+    ::-webkit-scrollbar-track { background: var(--bg-page); }
+    ::-webkit-scrollbar-thumb { background: #c9c3b5; border-radius: 5px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a8a395; }
+
+    @media (max-width: 1100px) {
+        h1 { font-size: 52px; }
+        .coverage-banner { grid-template-columns: 1fr; gap: 32px; }
+        .coverage-banner-stats { grid-template-columns: repeat(2, 1fr); }
+        .legend-cards { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 720px) {
+        .hero { padding: 28px 20px 72px; }
+        .hero-top { margin-bottom: 32px; padding-bottom: 24px; }
+        h1 { font-size: 38px; }
+        .hero-lead { font-size: 15px; }
+        .coverage-banner { margin: -50px 16px 0; padding: 28px 22px; }
+        .coverage-banner-num { font-size: 96px; }
+        .coverage-banner-num .pct { font-size: 36px; }
+        .coverage-banner-stats { grid-template-columns: 1fr; gap: 10px; }
+        .legend-section { padding: 48px 20px 20px; }
+        .section-head h2 { font-size: 26px; }
+        .legend-cards { grid-template-columns: 1fr; }
+        .matrix-section { padding: 20px 16px 60px; }
+        .matrix-wrap { padding: 16px; border-radius: 16px; }
+        .footer { padding: 40px 20px 32px; }
+        .footer-grid { grid-template-columns: 1fr; gap: 28px; }
+    }
+</style>
+</head>
+<body>
+
+<div class="hero">
+    <div class="hero-top">
+        <div class="brand">UDV Group</div>
+        <div class="breadcrumb">
+            <span><a href="https://udv.group/">главная</a></span>
+            <span><a href="https://udv.group/products/">продукты</a></span>
+            <span><a href="https://udv.group/products/nta/">UDV NTA</a></span>
+            <span class="crumb-current">покрытие MITRE ATT&amp;CK</span>
+        </div>
+    </div>
+
+    <div class="hero-tag">UDV NTA · анализ сетевого трафика</div>
+    <h1>покрытие матрицы<br><span class="soft">MITRE ATT&amp;CK Enterprise</span></h1>
+    <p class="hero-lead">
+        Техники и подтехники, которые UDV NTA обнаруживает в сетевом трафике &mdash;
+        сигнатурно, с помощью правил поведенческого анализа и моделей машинного обучения.
+    </p>
+</div>
+
+<div class="coverage-banner">
+    <div class="coverage-banner-left">
+        <div class="section-tag">общее покрытие</div>
+        <div class="coverage-banner-num">16,1<span class="pct">%</span></div>
+        <div class="coverage-banner-sub">90 из 558 техник и подтехник</div>
+    </div>
+    <div class="coverage-banner-stats">
+        <div class="stat stat-total">
+            <div class="stat-dot"></div>
+            <div class="stat-num-label">01</div>
+            <div class="stat-value">52<span class="frac"> / 201</span></div>
+            <div class="stat-label">техник покрыто из матрицы</div>
+        </div>
+        <div class="stat stat-sig">
+            <div class="stat-dot"></div>
+            <div class="stat-num-label">02</div>
+            <div class="stat-value">69</div>
+            <div class="stat-label">сигнатурно</div>
+        </div>
+        <div class="stat stat-nsig">
+            <div class="stat-dot"></div>
+            <div class="stat-num-label">03</div>
+            <div class="stat-value">21</div>
+            <div class="stat-label">поведенческий анализ и ML</div>
+        </div>
+        <div class="stat stat-part">
+            <div class="stat-dot"></div>
+            <div class="stat-num-label">04</div>
+            <div class="stat-value">19</div>
+            <div class="stat-label">техник с частичным покрытием</div>
+        </div>
+    </div>
+</div>
+
+<div class="legend-section">
+    <div class="section-head">
+        <div class="section-num">01</div>
+        <div class="section-title-block">
+            <div class="section-tag">легенда</div>
+            <h2>как читать матрицу</h2>
+        </div>
+    </div>
+    <div class="legend-cards">
+        <div class="legend-card sig">
+            <div>
+                <div class="legend-card-head">сигнатурно</div>
+                <div class="legend-card-title">покрыто сигнатурами</div>
+            </div>
+            <div class="legend-card-body">техника обнаруживается правилами сигнатурного анализа сетевого трафика</div>
+        </div>
+        <div class="legend-card nsig">
+            <div>
+                <div class="legend-card-head">поведение + ML</div>
+                <div class="legend-card-title">покрыто несигнатурно</div>
+            </div>
+            <div class="legend-card-body">поведенческие правила и модели машинного обучения</div>
+        </div>
+        <div class="legend-card part">
+            <div>
+                <div class="legend-card-head">частично</div>
+                <div class="legend-card-title">покрыта часть подтехник</div>
+            </div>
+            <div class="legend-card-body">обнаруживается не вся техника, а отдельные её подтехники</div>
+        </div>
+        <div class="legend-card none">
+            <div>
+                <div class="legend-card-head">не покрывается</div>
+                <div class="legend-card-title">вне зоны видимости</div>
+            </div>
+            <div class="legend-card-body">техника не имеет устойчивых сетевых индикаторов</div>
+        </div>
+    </div>
+</div>
+
+<div class="matrix-section">
+    <div class="section-head">
+        <div class="section-num">02</div>
+        <div class="section-title-block">
+            <div class="section-tag">матрица</div>
+            <h2>тактики, техники и подтехники</h2>
+        </div>
+    </div>
+    <div class="matrix-wrap">
+        <div class="matrix">
+            
+        <div class="tactic-col">
+            <div class="tactic-header">
+                <div class="tactic-num">01</div>
+                <div class="tactic-meta">
+                    <div class="tactic-id">TA0043</div>
+                    <div class="tactic-name-en">Reconnaissance</div>
+                </div>
+                <div class="tactic-name-ru">разведка</div>
+                <div class="tactic-count">10 техник</div>
+            </div>
+            <div class="tactic-body">
+                <div class="tech cov-sig" data-techid="T1595" title="T1595 — Active Scanning"><div class="tech-header"><div class="tech-id">T1595</div><span class="sub-badge">3/3</span></div><div class="tech-name">Active Scanning</div><div class="subs"><div class="sub-tech cov-sig" title="T1595.001 — Scanning IP Blocks"><span class="sub-id">T1595.001</span><span class="sub-name">Scanning IP Blocks</span></div><div class="sub-tech cov-sig" title="T1595.002 — Vulnerability Scanning"><span class="sub-id">T1595.002</span><span class="sub-name">Vulnerability Scanning</span></div><div class="sub-tech cov-sig" title="T1595.003 — Wordlist Scanning"><span class="sub-id">T1595.003</span><span class="sub-name">Wordlist Scanning</span></div></div></div>
+<div class="tech cov-none" data-techid="T1592" title="T1592 — Gather Victim Host Information"><div class="tech-header"><div class="tech-id">T1592</div><span class="sub-badge">0/4</span></div><div class="tech-name">Gather Victim Host Information</div><div class="subs"><div class="sub-tech cov-none" title="T1592.001 — Hardware"><span class="sub-id">T1592.001</span><span class="sub-name">Hardware</span></div><div class="sub-tech cov-none" title="T1592.002 — Software"><span class="sub-id">T1592.002</span><span class="sub-name">Software</span></div><div class="sub-tech cov-none" title="T1592.003 — Firmware"><span class="sub-id">T1592.003</span><span class="sub-name">Firmware</span></div><div class="sub-tech cov-none" title="T1592.004 — Client Configurations"><span class="sub-id">T1592.004</span><span class="sub-name">Client Configurations</span></div></div></div>
+<div class="tech cov-none" data-techid="T1589" title="T1589 — Gather Victim Identity Information"><div class="tech-header"><div class="tech-id">T1589</div><span class="sub-badge">0/3</span></div><div class="tech-name">Gather Victim Identity Information</div><div class="subs"><div class="sub-tech cov-none" title="T1589.001 — Credentials"><span class="sub-id">T1589.001</span><span class="sub-name">Credentials</span></div><div class="sub-tech cov-none" title="T1589.002 — Email Addresses"><span class="sub-id">T1589.002</span><span class="sub-name">Email Addresses</span></div><div class="sub-tech cov-none" title="T1589.003 — Employee Names"><span class="sub-id">T1589.003</span><span class="sub-name">Employee Names</span></div></div></div>
+<div class="tech cov-none" data-techid="T1590" title="T1590 — Gather Victim Network Information"><div class="tech-header"><div class="tech-id">T1590</div><span class="sub-badge">0/6</span></div><div class="tech-name">Gather Victim Network Information</div><div class="subs"><div class="sub-tech cov-none" title="T1590.001 — Domain Properties"><span class="sub-id">T1590.001</span><span class="sub-name">Domain Properties</span></div><div class="sub-tech cov-none" title="T1590.002 — DNS"><span class="sub-id">T1590.002</span><span class="sub-name">DNS</span></div><div class="sub-tech cov-none" title="T1590.003 — Network Trust Dependencies"><span class="sub-id">T1590.003</span><span class="sub-name">Network Trust Dependencies</span></div><div class="sub-tech cov-none" title="T1590.004 — Network Topology"><span class="sub-id">T1590.004</span><span class="sub-name">Network Topology</span></div><div class="sub-tech cov-none" title="T1590.005 — IP Addresses"><span class="sub-id">T1590.005</span><span class="sub-name">IP Addresses</span></div><div class="sub-tech cov-none" title="T1590.006 — Network Security Appliances"><span class="sub-id">T1590.006</span><span class="sub-name">Network Security Appliances</span></div></div></div>
+<div class="tech cov-none" data-techid="T1591" title="T1591 — Gather Victim Org Information"><div class="tech-header"><div class="tech-id">T1591</div><span class="sub-badge">0/4</span></div><div class="tech-name">Gather Victim Org Information</div><div class="subs"><div class="sub-tech cov-none" title="T1591.001 — Determine Physical Locations"><span class="sub-id">T1591.001</span><span class="sub-name">Determine Physical Locations</span></div><div class="sub-tech cov-none" title="T1591.002 — Business Relationships"><span class="sub-id">T1591.002</span><span class="sub-name">Business Relationships</span></div><div class="sub-tech cov-none" title="T1591.003 — Identify Business Tempo"><span class="sub-id">T1591.003</span><span class="sub-name">Identify Business Tempo</span></div><div class="sub-tech cov-none" title="T1591.004 — Identify Roles"><span class="sub-id">T1591.004</span><span class="sub-name">Identify Roles</span></div></div></div>
+<div class="tech cov-part" data-techid="T1598" title="T1598 — Phishing for Information"><div class="tech-header"><div class="tech-id">T1598</div><span class="sub-badge">2/4</span></div><div class="tech-name">Phishing for Information</div><div class="subs"><div class="sub-tech cov-none" title="T1598.001 — Spearphishing Service"><span class="sub-id">T1598.001</span><span class="sub-name">Spearphishing Service</span></div><div class="sub-tech cov-sig" title="T1598.002 — Spearphishing Attachment"><span class="sub-id">T1598.002</span><span class="sub-name">Spearphishing Attachment</span></div><div class="sub-tech cov-sig" title="T1598.003 — Spearphishing Link"><span class="sub-id">T1598.003</span><span class="sub-name">Spearphishing Link</span></div><div class="sub-tech cov-none" title="T1598.004 — Spearphishing Voice"><span class="sub-id">T1598.004</span><span class="sub-name">Spearphishing Voice</span></div></div></div>
+<div class="tech cov-none" data-techid="T1597" title="T1597 — Search Closed Sources"><div class="tech-header"><div class="tech-id">T1597</div><span class="sub-badge">0/2</span></div><div class="tech-name">Search Closed Sources</div><div class="subs"><div class="sub-tech cov-none" title="T1597.001 — Threat Intel Vendors"><span class="sub-id">T1597.001</span><span class="sub-name">Threat Intel Vendors</span></div><div class="sub-tech cov-none" title="T1597.002 — Purchase Technical Data"><span class="sub-id">T1597.002</span><span class="sub-name">Purchase Technical Data</span></div></div></div>
+<div class="tech cov-none" data-techid="T1596" title="T1596 — Search Open Technical Databases"><div class="tech-header"><div class="tech-id">T1596</div><span class="sub-badge">0/5</span></div><div class="tech-name">Search Open Technical Databases</div><div class="subs"><div class="sub-tech cov-none" title="T1596.001 — DNS/Passive DNS"><span class="sub-id">T1596.001</span><span class="sub-name">DNS/Passive DNS</span></div><div class="sub-tech cov-none" title="T1596.002 — WHOIS"><span class="sub-id">T1596.002</span><span class="sub-name">WHOIS</span></div><div class="sub-tech cov-none" title="T1596.003 — Digital Certificates"><span class="sub-id">T1596.003</span><span class="sub-name">Digital Certificates</span></div><div class="sub-tech cov-none" title="T1596.004 — CDNs"><span class="sub-id">T1596.004</span><span class="sub-name">CDNs</span></div><div class="sub-tech cov-none" title="T1596.005 — Scan Databases"><span class="sub-id">T1596.005</span><span class="sub-name">Scan Databases</span></div></div></div>
+<div class="tech cov-none" data-techid="T1593" title="T1593 — Search Open Websites/Domains"><div class="tech-header"><div class="tech-id">T1593</div><span class="sub-badge">0/3</span></div><div class="tech-name">Search Open Websites/Domains</div><div class="subs"><div class="sub-tech cov-none" title="T1593.001 — Social Media"><span class="sub-id">T1593.001</span><span class="sub-name">Social Media</span></div><div class="sub-tech cov-none" title="T1593.002 — Search Engines"><span class="sub-id">T1593.002</span><span class="sub-name">Search Engines</span></div><div class="sub-tech cov-none" title="T1593.003 — Code Repositories"><span class="sub-id">T1593.003</span><span class="sub-name">Code Repositories</span></div></div></div>
+<div class="tech cov-none" data-techid="T1594" title="T1594 — Search Victim-Owned Websites"><div class="tech-header"><div class="tech-id">T1594</div></div><div class="tech-name">Search Victim-Owned Websites</div></div>
+            </div>
+        </div>
+        
+
+        <div class="tactic-col">
+            <div class="tactic-header">
+                <div class="tactic-num">02</div>
+                <div class="tactic-meta">
+                    <div class="tactic-id">TA0042</div>
+                    <div class="tactic-name-en">Resource Development</div>
+                </div>
+                <div class="tactic-name-ru">подготовка ресурсов</div>
+                <div class="tactic-count">8 техник</div>
+            </div>
+            <div class="tactic-body">
+                <div class="tech cov-none" data-techid="T1650" title="T1650 — Acquire Access"><div class="tech-header"><div class="tech-id">T1650</div></div><div class="tech-name">Acquire Access</div></div>
+<div class="tech cov-none" data-techid="T1583" title="T1583 — Acquire Infrastructure"><div class="tech-header"><div class="tech-id">T1583</div><span class="sub-badge">0/8</span></div><div class="tech-name">Acquire Infrastructure</div><div class="subs"><div class="sub-tech cov-none" title="T1583.001 — Domains"><span class="sub-id">T1583.001</span><span class="sub-name">Domains</span></div><div class="sub-tech cov-none" title="T1583.002 — DNS Server"><span class="sub-id">T1583.002</span><span class="sub-name">DNS Server</span></div><div class="sub-tech cov-none" title="T1583.003 — Virtual Private Server"><span class="sub-id">T1583.003</span><span class="sub-name">Virtual Private Server</span></div><div class="sub-tech cov-none" title="T1583.004 — Server"><span class="sub-id">T1583.004</span><span class="sub-name">Server</span></div><div class="sub-tech cov-none" title="T1583.005 — Botnet"><span class="sub-id">T1583.005</span><span class="sub-name">Botnet</span></div><div class="sub-tech cov-none" title="T1583.006 — Web Services"><span class="sub-id">T1583.006</span><span class="sub-name">Web Services</span></div><div class="sub-tech cov-none" title="T1583.007 — Serverless"><span class="sub-id">T1583.007</span><span class="sub-name">Serverless</span></div><div class="sub-tech cov-none" title="T1583.008 — Malvertising"><span class="sub-id">T1583.008</span><span class="sub-name">Malvertising</span></div></div></div>
+<div class="tech cov-none" data-techid="T1586" title="T1586 — Compromise Accounts"><div class="tech-header"><div class="tech-id">T1586</div><span class="sub-badge">0/3</span></div><div class="tech-name">Compromise Accounts</div><div class="subs"><div class="sub-tech cov-none" title="T1586.001 — Social Media Accounts"><span class="sub-id">T1586.001</span><span class="sub-name">Social Media Accounts</span></div><div class="sub-tech cov-none" title="T1586.002 — Email Accounts"><span class="sub-id">T1586.002</span><span class="sub-name">Email Accounts</span></div><div class="sub-tech cov-none" title="T1586.003 — Cloud Accounts"><span class="sub-id">T1586.003</span><span class="sub-name">Cloud Accounts</span></div></div></div>
+<div class="tech cov-none" data-techid="T1584" title="T1584 — Compromise Infrastructure"><div class="tech-header"><div class="tech-id">T1584</div><span class="sub-badge">0/8</span></div><div class="tech-name">Compromise Infrastructure</div><div class="subs"><div class="sub-tech cov-none" title="T1584.001 — Domains"><span class="sub-id">T1584.001</span><span class="sub-name">Domains</span></div><div class="sub-tech cov-none" title="T1584.002 — DNS Server"><span class="sub-id">T1584.002</span><span class="sub-name">DNS Server</span></div><div class="sub-tech cov-none" title="T1584.003 — Virtual Private Server"><span class="sub-id">T1584.003</span><span class="sub-name">Virtual Private Server</span></div><div class="sub-tech cov-none" title="T1584.004 — Server"><span class="sub-id">T1584.004</span><span class="sub-name">Server</span></div><div class="sub-tech cov-none" title="T1584.005 — Botnet"><span class="sub-id">T1584.005</span><span class="sub-name">Botnet</span></div><div class="sub-tech cov-none" title="T1584.006 — Web Services"><span class="sub-id">T1584.006</span><span class="sub-name">Web Services</span></div><div class="sub-tech cov-none" title="T1584.007 — Serverless"><span class="sub-id">T1584.007</span><span class="sub-name">Serverless</span></div><div class="sub-tech cov-none" title="T1584.008 — Network Devices"><span class="sub-id">T1584.008</span><span class="sub-name">Network Devices</span></div></div></div>
+<div class="tech cov-none" data-techid="T1587" title="T1587 — Develop Capabilities"><div class="tech-header"><div class="tech-id">T1587</div><span class="sub-badge">0/4</span></div><div class="tech-name">Develop Capabilities</div><div class="subs"><div class="sub-tech cov-none" title="T1587.001 — Malware"><span class="sub-id">T1587.001</span><span class="sub-name">Malware</span></div><div class="sub-tech cov-none" title="T1587.002 — Code Signing Certificates"><span class="sub-id">T1587.002</span><span class="sub-name">Code Signing Certificates</span></div><div class="sub-tech cov-none" title="T1587.003 — Digital Certificates"><span class="sub-id">T1587.003</span><span class="sub-name">Digital Certificates</span></div><div class="sub-tech cov-none" title="T1587.004 — Exploits"><span class="sub-id">T1587.004</span><span class="sub-name">Exploits</span></div></div></div>
+<div class="tech cov-none" data-techid="T1585" title="T1585 — Establish Accounts"><div class="tech-header"><div class="tech-id">T1585</div><span class="sub-badge">0/3</span></div><div class="tech-name">Establish Accounts</div><div class="subs"><div class="sub-tech cov-none" title="T1585.001 — Social Media Accounts"><span class="sub-id">T1585.001</span><span class="sub-name">Social Media Accounts</span></div><div class="sub-tech cov-none" title="T1585.002 — Email Accounts"><span class="sub-id">T1585.002</span><span class="sub-name">Email Accounts</span></div><div class="sub-tech cov-none" title="T1585.003 — Cloud Accounts"><span class="sub-id">T1585.003</span><span class="sub-name">Cloud Accounts</span></div></div></div>
+<div class="tech cov-none" data-techid="T1588" title="T1588 — Obtain Capabilities"><div class="tech-header"><div class="tech-id">T1588</div><span class="sub-badge">0/7</span></div><div class="tech-name">Obtain Capabilities</div><div class="subs"><div class="sub-tech cov-none" title="T1588.001 — Malware"><span class="sub-id">T1588.001</span><span class="sub-name">Malware</span></div><div class="sub-tech cov-none" title="T1588.002 — Tool"><span class="sub-id">T1588.002</span><span class="sub-name">Tool</span></div><div class="sub-tech cov-none" title="T1588.003 — Code Signing Certificates"><span class="sub-id">T1588.003</span><span class="sub-name">Code Signing Certificates</span></div><div class="sub-tech cov-none" title="T1588.004 — Digital Certificates"><span class="sub-id">T1588.004</span><span class="sub-name">Digital Certificates</span></div><div class="sub-tech cov-none" title="T1588.005 — Exploits"><span class="sub-id">T1588.005</span><span class="sub-name">Exploits</span></div><div class="sub-tech cov-none" title="T1588.006 — Vulnerabilities"><span class="sub-id">T1588.006</span><span class="sub-name">Vulnerabilities</span></div><div class="sub-tech cov-none" title="T1588.007 — Artificial Intelligence"><span class="sub-id">T1588.007</span><span class="sub-name">Artificial Intelligence</span></div></div></div>
+<div class="tech cov-none" data-techid="T1608" title="T1608 — Stage Capabilities"><div class="tech-header"><div class="tech-id">T1608</div><span class="sub-badge">0/6</span></div><div class="tech-name">Stage Capabilities</div><div class="subs"><div class="sub-tech cov-none" title="T1608.001 — Upload Malware"><span class="sub-id">T1608.001</span><span class="sub-name">Upload Malware</span></div><div class="sub-tech cov-none" title="T1608.002 — Upload Tool"><span class="sub-id">T1608.002</span><span class="sub-name">Upload Tool</span></div><div class="sub-tech cov-none" title="T1608.003 — Install Digital Certificate"><span class="sub-id">T1608.003</span><span class="sub-name">Install Digital Certificate</span></div><div class="sub-tech cov-none" title="T1608.004 — Drive-by Target"><span class="sub-id">T1608.004</span><span class="sub-name">Drive-by Target</span></div><div class="sub-tech cov-none" title="T1608.005 — Link Target"><span class="sub-id">T1608.005</span><span class="sub-name">Link Target</span></div><div class="sub-tech cov-none" title="T1608.006 — SEO Poisoning"><span class="sub-id">T1608.006</span><span class="sub-name">SEO Poisoning</span></div></div></div>
+            </div>
+        </div>
+        
+
+        <div class="tactic-col">
+            <div class="tactic-header">
+                <div class="tactic-num">03</div>
+                <div class="tactic-meta">
+                    <div class="tactic-id">TA0001</div>
+                    <div class="tactic-name-en">Initial Access</div>
+                </div>
+                <div class="tactic-name-ru">первоначальный доступ</div>
+                <div class="tactic-count">10 техник</div>
+            </div>
+            <div class="tactic-body">
+                <div class="tech cov-sig" data-techid="T1659" title="T1659 — Content Injection"><div class="tech-header"><div class="tech-id">T1659</div></div><div class="tech-name">Content Injection</div></div>
+<div class="tech cov-sig" data-techid="T1189" title="T1189 — Drive-by Compromise"><div class="tech-header"><div class="tech-id">T1189</div></div><div class="tech-name">Drive-by Compromise</div></div>
+<div class="tech cov-sig" data-techid="T1190" title="T1190 — Exploit Public-Facing Application"><div class="tech-header"><div class="tech-id">T1190</div></div><div class="tech-name">Exploit Public-Facing Application</div></div>
+<div class="tech cov-sig" data-techid="T1133" title="T1133 — External Remote Services"><div class="tech-header"><div class="tech-id">T1133</div></div><div class="tech-name">External Remote Services</div></div>
+<div class="tech cov-none" data-techid="T1200" title="T1200 — Hardware Additions"><div class="tech-header"><div class="tech-id">T1200</div></div><div class="tech-name">Hardware Additions</div></div>
+<div class="tech cov-part" data-techid="T1566" title="T1566 — Phishing"><div class="tech-header"><div class="tech-id">T1566</div><span class="sub-badge">2/4</span></div><div class="tech-name">Phishing</div><div class="subs"><div class="sub-tech cov-sig" title="T1566.001 — Spearphishing Attachment"><span class="sub-id">T1566.001</span><span class="sub-name">Spearphishing Attachment</span></div><div class="sub-tech cov-sig" title="T1566.002 — Spearphishing Link"><span class="sub-id">T1566.002</span><span class="sub-name">Spearphishing Link</span></div><div class="sub-tech cov-none" title="T1566.003 — Spearphishing via Service"><span class="sub-id">T1566.003</span><span class="sub-name">Spearphishing via Service</span></div><div class="sub-tech cov-none" title="T1566.004 — Spearphishing Voice"><span class="sub-id">T1566.004</span><span class="sub-name">Spearphishing Voice</span></div></div></div>
+<div class="tech cov-none" data-techid="T1091" title="T1091 — Replication Through Removable Media"><div class="tech-header"><div class="tech-id">T1091</div></div><div class="tech-name">Replication Through Removable Media</div></div>
+<div class="tech cov-none" data-techid="T1195" title="T1195 — Supply Chain Compromise"><div class="tech-header"><div class="tech-id">T1195</div><span class="sub-badge">0/3</span></div><div class="tech-name">Supply Chain Compromise</div><div class="subs"><div class="sub-tech cov-none" title="T1195.001 — Compromise Software Dependencies and Development Tools"><span class="sub-id">T1195.001</span><span class="sub-name">Compromise Software Dependencies and Development Tools</span></div><div class="sub-tech cov-none" title="T1195.002 — Compromise Software Supply Chain"><span class="sub-id">T1195.002</span><span class="sub-name">Compromise Software Supply Chain</span></div><div class="sub-tech cov-none" title="T1195.003 — Compromise Hardware Supply Chain"><span class="sub-id">T1195.003</span><span class="sub-name">Compromise Hardware Supply Chain</span></div></div></div>
+<div class="tech cov-none" data-techid="T1199" title="T1199 — Trusted Relationship"><div class="tech-header"><div class="tech-id">T1199</div></div><div class="tech-name">Trusted Relationship</div></div>
+<div class="tech cov-none" data-techid="T1078" title="T1078 — Valid Accounts"><div class="tech-header"><div class="tech-id">T1078</div><span class="sub-badge">0/4</span></div><div class="tech-name">Valid Accounts</div><div class="subs"><div class="sub-tech cov-none" title="T1078.001 — Default Accounts"><span class="sub-id">T1078.001</span><span class="sub-name">Default Accounts</span></div><div class="sub-tech cov-none" title="T1078.002 — Domain Accounts"><span class="sub-id">T1078.002</span><span class="sub-name">Domain Accounts</span></div><div class="sub-tech cov-none" title="T1078.003 — Local Accounts"><span class="sub-id">T1078.003</span><span class="sub-name">Local Accounts</span></div><div class="sub-tech cov-none" title="T1078.004 — Cloud Accounts"><span class="sub-id">T1078.004</span><span class="sub-name">Cloud Accounts</span></div></div></div>
+            </div>
+        </div>
+        
+
+        <div class="tactic-col">
+            <div class="tactic-header">
+                <div class="tactic-num">04</div>
+                <div class="tactic-meta">
+                    <div class="tactic-id">TA0002</div>
+                    <div class="tactic-name-en">Execution</div>
+                </div>
+                <div class="tactic-name-ru">выполнение</div>
+                <div class="tactic-count">13 техник</div>
+            </div>
+            <div class="tactic-body">
+                <div class="tech cov-part" data-techid="T1059" title="T1059 — Command and Scripting Interpreter"><div class="tech-header"><div class="tech-id">T1059</div><span class="sub-badge">5/12</span></div><div class="tech-name">Command and Scripting Interpreter</div><div class="subs"><div class="sub-tech cov-sig" title="T1059.001 — PowerShell"><span class="sub-id">T1059.001</span><span class="sub-name">PowerShell</span></div><div class="sub-tech cov-none" title="T1059.002 — AppleScript"><span class="sub-id">T1059.002</span><span class="sub-name">AppleScript</span></div><div class="sub-tech cov-sig" title="T1059.003 — Windows Command Shell"><span class="sub-id">T1059.003</span><span class="sub-name">Windows Command Shell</span></div><div class="sub-tech cov-none" title="T1059.004 — Unix Shell"><span class="sub-id">T1059.004</span><span class="sub-name">Unix Shell</span></div><div class="sub-tech cov-sig" title="T1059.005 — Visual Basic"><span class="sub-id">T1059.005</span><span class="sub-name">Visual Basic</span></div><div class="sub-tech cov-sig" title="T1059.006 — Python"><span class="sub-id">T1059.006</span><span class="sub-name">Python</span></div><div class="sub-tech cov-sig" title="T1059.007 — JavaScript"><span class="sub-id">T1059.007</span><span class="sub-name">JavaScript</span></div><div class="sub-tech cov-none" title="T1059.008 — Network Device CLI"><span class="sub-id">T1059.008</span><span class="sub-name">Network Device CLI</span></div><div class="sub-tech cov-none" title="T1059.009 — Cloud API"><span class="sub-id">T1059.009</span><span class="sub-name">Cloud API</span></div><div class="sub-tech cov-none" title="T1059.010 — AutoHotKey & AutoIT"><span class="sub-id">T1059.010</span><span class="sub-name">AutoHotKey & AutoIT</span></div><div class="sub-tech cov-none" title="T1059.011 — Lua"><span class="sub-id">T1059.011</span><span class="sub-name">Lua</span></div><div class="sub-tech cov-none" title="T1059.012 — Hypervisor CLI"><span class="sub-id">T1059.012</span><span class="sub-name">Hypervisor CLI</span></div></div></div>
+<div class="tech cov-none" data-techid="T1609" title="T1609 — Container Administration Command"><div class="tech-header"><div class="tech-id">T1609</div></div><div class="tech-name">Container Administration Command</div></div>
+<div class="tech cov-none" data-techid="T1610" title="T1610 — Deploy Container"><div class="tech-header"><div class="tech-id">T1610</div></div><div class="tech-name">Deploy Container</div></div>
+<div class="tech cov-sig" data-techid="T1203" title="T1203 — Exploitation for Client Execution"><div class="tech-header"><div class="tech-id">T1203</div></div><div class="tech-name">Exploitation for Client Execution</div></div>
+<div class="tech cov-none" data-techid="T1559" title="T1559 — Inter-Process Communication"><div class="tech-header"><div class="tech-id">T1559</div><span class="sub-badge">0/3</span></div><div class="tech-name">Inter-Process Communication</div><div class="subs"><div class="sub-tech cov-none" title="T1559.001 — Component Object Model"><span class="sub-id">T1559.001</span><span class="sub-name">Component Object Model</span></div><div class="sub-tech cov-none" title="T1559.002 — Dynamic Data Exchange"><span class="sub-id">T1559.002</span><span class="sub-name">Dynamic Data Exchange</span></div><div class="sub-tech cov-none" title="T1559.003 — XPC Services"><span class="sub-id">T1559.003</span><span class="sub-name">XPC Services</span></div></div></div>
+<div class="tech cov-none" data-techid="T1106" title="T1106 — Native API"><div class="tech-header"><div class="tech-id">T1106</div></div><div class="tech-name">Native API</div></div>
+<div class="tech cov-part" data-techid="T1053" title="T1053 — Scheduled Task/Job"><div class="tech-header"><div class="tech-id">T1053</div><span class="sub-badge">1/5</span></div><div class="tech-name">Scheduled Task/Job</div><div class="subs"><div class="sub-tech cov-nsig" title="T1053.002 — At"><span class="sub-id">T1053.002</span><span class="sub-name">At</span></div><div class="sub-tech cov-none" title="T1053.003 — Cron"><span class="sub-id">T1053.003</span><span class="sub-name">Cron</span></div><div class="sub-tech cov-none" title="T1053.005 — Scheduled Task"><span class="sub-id">T1053.005</span><span class="sub-name">Scheduled Task</span></div><div class="sub-tech cov-none" title="T1053.006 — Systemd Timers"><span class="sub-id">T1053.006</span><span class="sub-name">Systemd Timers</span></div><div class="sub-tech cov-none" title="T1053.007 — Container Orchestration Job"><span class="sub-id">T1053.007</span><span class="sub-name">Container Orchestration Job</span></div></div></div>
+<div class="tech cov-none" data-techid="T1648" title="T1648 — Serverless Execution"><div class="tech-header"><div class="tech-id">T1648</div></div><div class="tech-name">Serverless Execution</div></div>
+<div class="tech cov-none" data-techid="T1129" title="T1129 — Shared Modules"><div class="tech-header"><div class="tech-id">T1129</div></div><div class="tech-name">Shared Modules</div></div>
+<div class="tech cov-none" data-techid="T1072" title="T1072 — Software Deployment Tools"><div class="tech-header"><div class="tech-id">T1072</div></div><div class="tech-name">Software Deployment Tools</div></div>
+<div class="tech cov-part" data-techid="T1569" title="T1569 — System Services"><div class="tech-header"><div class="tech-id">T1569</div><span class="sub-badge">1/2</span></div><div class="tech-name">System Services</div><div class="subs"><div class="sub-tech cov-none" title="T1569.001 — Launchctl"><span class="sub-id">T1569.001</span><span class="sub-name">Launchctl</span></div><div class="sub-tech cov-nsig" title="T1569.002 — Service Execution"><span class="sub-id">T1569.002</span><span class="sub-name">Service Execution</span></div></div></div>
+<div class="tech cov-part" data-techid="T1204" title="T1204 — User Execution"><div class="tech-header"><div class="tech-id">T1204</div><span class="sub-badge">2/3</span></div><div class="tech-name">User Execution</div><div class="subs"><div class="sub-tech cov-sig" title="T1204.001 — Malicious Link"><span class="sub-id">T1204.001</span><span class="sub-name">Malicious Link</span></div><div class="sub-tech cov-sig" title="T1204.002 — Malicious File"><span class="sub-id">T1204.002</span><span class="sub-name">Malicious File</span></div><div class="sub-tech cov-none" title="T1204.003 — Malicious Image"><span class="sub-id">T1204.003</span><span class="sub-name">Malicious Image</span></div></div></div>
+<div class="tech cov-nsig" data-techid="T1047" title="T1047 — Windows Management Instrumentation"><div class="tech-header"><div class="tech-id">T1047</div></div><div class="tech-name">Windows Management Instrumentation</div></div>
+            </div>
+        </div>
+        
+
+        <div class="tactic-col">
+            <div class="tactic-header">
+                <div class="tactic-num">05</div>
+                <div class="tactic-meta">
+                    <div class="tactic-id">TA0003</div>
+                    <div class="tactic-name-en">Persistence</div>
+                </div>
+                <div class="tactic-name-ru">закрепление</div>
+                <div class="tactic-count">20 техник</div>
+            </div>
+            <div class="tactic-body">
+                <div class="tech cov-none" data-techid="T1098" title="T1098 — Account Manipulation"><div class="tech-header"><div class="tech-id">T1098</div><span class="sub-badge">0/7</span></div><div class="tech-name">Account Manipulation</div><div class="subs"><div class="sub-tech cov-none" title="T1098.001 — Additional Cloud Credentials"><span class="sub-id">T1098.001</span><span class="sub-name">Additional Cloud Credentials</span></div><div class="sub-tech cov-none" title="T1098.002 — Additional Email Delegate Permissions"><span class="sub-id">T1098.002</span><span class="sub-name">Additional Email Delegate Permissions</span></div><div class="sub-tech cov-none" title="T1098.003 — Additional Cloud Roles"><span class="sub-id">T1098.003</span><span class="sub-name">Additional Cloud Roles</span></div><div class="sub-tech cov-none" title="T1098.004 — SSH Authorized Keys"><span class="sub-id">T1098.004</span><span class="sub-name">SSH Authorized Keys</span></div><div class="sub-tech cov-none" title="T1098.005 — Device Registration"><span class="sub-id">T1098.005</span><span class="sub-name">Device Registration</span></div><div class="sub-tech cov-none" title="T1098.006 — Additional Container Cluster Roles"><span class="sub-id">T1098.006</span><span class="sub-name">Additional Container Cluster Roles</span></div><div class="sub-tech cov-none" title="T1098.007 — Additional Local or Domain Groups"><span class="sub-id">T1098.007</span><span class="sub-name">Additional Local or Domain Groups</span></div></div></div>
+<div class="tech cov-sig" data-techid="T1197" title="T1197 — BITS Jobs"><div class="tech-header"><div class="tech-id">T1197</div></div><div class="tech-name">BITS Jobs</div></div>
+<div class="tech cov-none" data-techid="T1547" title="T1547 — Boot or Logon Autostart Execution"><div class="tech-header"><div class="tech-id">T1547</div><span class="sub-badge">0/14</span></div><div class="tech-name">Boot or Logon Autostart Execution</div><div class="subs"><div class="sub-tech cov-none" title="T1547.001 — Registry Run Keys / Startup Folder"><span class="sub-id">T1547.001</span><span class="sub-name">Registry Run Keys / Startup Folder</span></div><div class="sub-tech cov-none" title="T1547.002 — Authentication Package"><span class="sub-id">T1547.002</span><span class="sub-name">Authentication Package</span></div><div class="sub-tech cov-none" title="T1547.003 — Time Providers"><span class="sub-id">T1547.003</span><span class="sub-name">Time Providers</span></div><div class="sub-tech cov-none" title="T1547.004 — Winlogon Helper DLL"><span class="sub-id">T1547.004</span><span class="sub-name">Winlogon Helper DLL</span></div><div class="sub-tech cov-none" title="T1547.005 — Security Support Provider"><span class="sub-id">T1547.005</span><span class="sub-name">Security Support Provider</span></div><div class="sub-tech cov-none" title="T1547.006 — Kernel Modules and Extensions"><span class="sub-id">T1547.006</span><span class="sub-name">Kernel Modules and Extensions</span></div><div class="sub-tech cov-none" title="T1547.007 — Re-opened Applications"><span class="sub-id">T1547.007</span><span class="sub-name">Re-opened Applications</span></div><div class="sub-tech cov-none" title="T1547.008 — LSASS Driver"><span class="sub-id">T1547.008</span><span class="sub-name">LSASS Driver</span></div><div class="sub-tech cov-none" title="T1547.009 — Shortcut Modification"><span class="sub-id">T1547.009</span><span class="sub-name">Shortcut Modification</span></div><div class="sub-tech cov-none" title="T1547.010 — Port Monitors"><span class="sub-id">T1547.010</span><span class="sub-name">Port Monitors</span></div><div class="sub-tech cov-none" title="T1547.012 — Print Processors"><span class="sub-id">T1547.012</span><span class="sub-name">Print Processors</span></div><div class="sub-tech cov-none" title="T1547.013 — XDG Autostart Entries"><span class="sub-id">T1547.013</span><span class="sub-name">XDG Autostart Entries</span></div><div class="sub-tech cov-none" title="T1547.014 — Active Setup"><span class="sub-id">T1547.014</span><span class="sub-name">Active Setup</span></div><div class="sub-tech cov-none" title="T1547.015 — Login Items"><span class="sub-id">T1547.015</span><span class="sub-name">Login Items</span></div></div></div>
+<div class="tech cov-none" data-techid="T1037" title="T1037 — Boot or Logon Initialization Scripts"><div class="tech-header"><div class="tech-id">T1037</div><span class="sub-badge">0/5</span></div><div class="tech-name">Boot or Logon Initialization Scripts</div><div class="subs"><div class="sub-tech cov-none" title="T1037.001 — Logon Script (Windows)"><span class="sub-id">T1037.001</span><span class="sub-name">Logon Script (Windows)</span></div><div class="sub-tech cov-none" title="T1037.002 — Login Hook"><span class="sub-id">T1037.002</span><span class="sub-name">Login Hook</span></div><div class="sub-tech cov-none" title="T1037.003 — Network Logon Script"><span class="sub-id">T1037.003</span><span class="sub-name">Network Logon Script</span></div><div class="sub-tech cov-none" title="T1037.004 — RC Scripts"><span class="sub-id">T1037.004</span><span class="sub-name">RC Scripts</span></div><div class="sub-tech cov-none" title="T1037.005 — Startup Items"><span class="sub-id">T1037.005</span><span class="sub-name">Startup Items</span></div></div></div>
+<div class="tech cov-none" data-techid="T1176" title="T1176 — Browser Extensions"><div class="tech-header"><div class="tech-id">T1176</div></div><div class="tech-name">Browser Extensions</div></div>
+<div class="tech cov-none" data-techid="T1554" title="T1554 — Compromise Host Software Binary"><div class="tech-header"><div class="tech-id">T1554</div></div><div class="tech-name">Compromise Host Software Binary</div></div>
+<div class="tech cov-none" data-techid="T1136" title="T1136 — Create Account"><div class="tech-header"><div class="tech-id">T1136</div><span class="sub-badge">0/3</span></div><div class="tech-name">Create Account</div><div class="subs"><div class="sub-tech cov-none" title="T1136.001 — Local Account"><span class="sub-id">T1136.001</span><span class="sub-name">Local Account</span></div><div class="sub-tech cov-none" title="T1136.002 — Domain Account"><span class="sub-id">T1136.002</span><span class="sub-name">Domain Account</span></div><div class="sub-tech cov-none" title="T1136.003 — Cloud Account"><span class="sub-id">T1136.003</span><span class="sub-name">Cloud Account</span></div></div></div>
+<div class="tech cov-none" data-techid="T1543" title="T1543 — Create or Modify System Process"><div class="tech-header"><div class="tech-id">T1543</div><span class="sub-badge">0/5</span></div><div class="tech-name">Create or Modify System Process</div><div class="subs"><div class="sub-tech cov-none" title="T1543.001 — Launch Agent"><span class="sub-id">T1543.001</span><span class="sub-name">Launch Agent</span></div><div class="sub-tech cov-none" title="T1543.002 — Systemd Service"><span class="sub-id">T1543.002</span><span class="sub-name">Systemd Service</span></div><div class="sub-tech cov-none" title="T1543.003 — Windows Service"><span class="sub-id">T1543.003</span><span class="sub-name">Windows Service</span></div><div class="sub-tech cov-none" title="T1543.004 — Launch Daemon"><span class="sub-id">T1543.004</span><span class="sub-name">Launch Daemon</span></div><div class="sub-tech cov-none" title="T1543.005 — Container Service"><span class="sub-id">T1543.005</span><span class="sub-name">Container Service</span></div></div></div>
+<div class="tech cov-none" data-techid="T1546" title="T1546 — Event Triggered Execution"><div class="tech-header"><div class="tech-id">T1546</div><span class="sub-badge">0/17</span></div><div class="tech-name">Event Triggered Execution</div><div class="subs"><div class="sub-tech cov-none" title="T1546.001 — Change Default File Association"><span class="sub-id">T1546.001</span><span class="sub-name">Change Default File Association</span></div><div class="sub-tech cov-none" title="T1546.002 — Screensaver"><span class="sub-id">T1546.002</span><span class="sub-name">Screensaver</span></div><div class="sub-tech cov-none" title="T1546.003 — Windows Management Instrumentation Event Subscription"><span class="sub-id">T1546.003</span><span class="sub-name">Windows Management Instrumentation Event Subscription</span></div><div class="sub-tech cov-none" title="T1546.004 — Unix Shell Configuration Modification"><span class="sub-id">T1546.004</span><span class="sub-name">Unix Shell Configuration Modification</span></div><div class="sub-tech cov-none" title="T1546.005 — Trap"><span class="sub-id">T1546.005</span><span class="sub-name">Trap</span></div><div class="sub-tech cov-none" title="T1546.006 — LC_LOAD_DYLIB Addition"><span class="sub-id">T1546.006</span><span class="sub-name">LC_LOAD_DYLIB Addition</span></div><div class="sub-tech cov-none" title="T1546.007 — Netsh Helper DLL"><span class="sub-id">T1546.007</span><span class="sub-name">Netsh Helper DLL</span></div><div class="sub-tech cov-none" title="T1546.008 — Accessibility Features"><span class="sub-id">T1546.008</span><span class="sub-name">Accessibility Features</span></div><div class="sub-tech cov-none" title="T1546.009 — AppCert DLLs"><span class="sub-id">T1546.009</span><span class="sub-name">AppCert DLLs</span></div><div class="sub-tech cov-none" title="T1546.010 — AppInit DLLs"><span class="sub-id">T1546.010</span><span class="sub-name">AppInit DLLs</span></div><div class="sub-tech cov-none" title="T1546.011 — Application Shimming"><span class="sub-id">T1546.011</span><span class="sub-name">Application Shimming</span></div><div class="sub-tech cov-none" title="T1546.012 — Image File Execution Options Injection"><span class="sub-id">T1546.012</span><span class="sub-name">Image File Execution Options Injection</span></div><div class="sub-tech cov-none" title="T1546.013 — PowerShell Profile"><span class="sub-id">T1546.013</span><span class="sub-name">PowerShell Profile</span></div><div class="sub-tech cov-none" title="T1546.014 — Emond"><span class="sub-id">T1546.014</span><span class="sub-name">Emond</span></div><div class="sub-tech cov-none" title="T1546.015 — Component Object Model Hijacking"><span class="sub-id">T1546.015</span><span class="sub-name">Component Object Model Hijacking</span></div><div class="sub-tech cov-none" title="T1546.016 — Installer Packages"><span class="sub-id">T1546.016</span><span class="sub-name">Installer Packages</span></div><div class="sub-tech cov-none" title="T1546.017 — Udev Rules"><span class="sub-id">T1546.017</span><span class="sub-name">Udev Rules</span></div></div></div>
+<div class="tech cov-sig" data-techid="T1133" title="T1133 — External Remote Services"><div class="tech-header"><div class="tech-id">T1133</div></div><div class="tech-name">External Remote Services</div></div>
+<div class="tech cov-none" data-techid="T1574" title="T1574 — Hijack Execution Flow"><div class="tech-header"><div class="tech-id">T1574</div><span class="sub-badge">0/13</span></div><div class="tech-name">Hijack Execution Flow</div><div class="subs"><div class="sub-tech cov-none" title="T1574.001 — DLL Search Order Hijacking"><span class="sub-id">T1574.001</span><span class="sub-name">DLL Search Order Hijacking</span></div><div class="sub-tech cov-none" title="T1574.002 — DLL Side-Loading"><span class="sub-id">T1574.002</span><span class="sub-name">DLL Side-Loading</span></div><div class="sub-tech cov-none" title="T1574.004 — Dylib Hijacking"><span class="sub-id">T1574.004</span><span class="sub-name">Dylib Hijacking</span></div><div class="sub-tech cov-none" title="T1574.005 — Executable Installer File Permissions Weakness"><span class="sub-id">T1574.005</span><span class="sub-name">Executable Installer File Permissions Weakness</span></div><div class="sub-tech cov-none" title="T1574.006 — Dynamic Linker Hijacking"><span class="sub-id">T1574.006</span><span class="sub-name">Dynamic Linker Hijacking</span></div><div class="sub-tech cov-none" title="T1574.007 — Path Interception by PATH Environment Variable"><span class="sub-id">T1574.007</span><span class="sub-name">Path Interception by PATH Environment Variable</span></div><div class="sub-tech cov-none" title="T1574.008 — Path Interception by Search Order Hijacking"><span class="sub-id">T1574.008</span><span class="sub-name">Path Interception by Search Order Hijacking</span></div><div class="sub-tech cov-none" title="T1574.009 — Path Interception by Unquoted Path"><span class="sub-id">T1574.009</span><span class="sub-name">Path Interception by Unquoted Path</span></div><div class="sub-tech cov-none" title="T1574.010 — Services File Permissions Weakness"><span class="sub-id">T1574.010</span><span class="sub-name">Services File Permissions Weakness</span></div><div class="sub-tech cov-none" title="T1574.011 — Services Registry Permissions Weakness"><span class="sub-id">T1574.011</span><span class="sub-name">Services Registry Permissions Weakness</span></div><div class="sub-tech cov-none" title="T1574.012 — COR_PROFILER"><span class="sub-id">T1574.012</span><span class="sub-name">COR_PROFILER</span></div><div class="sub-tech cov-none" title="T1574.013 — KernelCallbackTable"><span class="sub-id">T1574.013</span><span class="sub-name">KernelCallbackTable</span></div><div class="sub-tech cov-none" title="T1574.014 — AppDomainManager"><span class="sub-id">T1574.014</span><span class="sub-name">AppDomainManager</span></div></div></div>
+<div class="tech cov-none" data-techid="T1525" title="T1525 — Implant Internal Image"><div class="tech-header"><div class="tech-id">T1525</div></div><div class="tech-name">Implant Internal Image</div></div>
+<div class="tech cov-none" data-techid="T1556" title="T1556 — Modify Authentication Process"><div class="tech-header"><div class="tech-id">T1556</div><span class="sub-badge">0/9</span></div><div class="tech-name">Modify Authentication Process</div><div class="subs"><div class="sub-tech cov-none" title="T1556.001 — Domain Controller Authentication"><span class="sub-id">T1556.001</span><span class="sub-name">Domain Controller Authentication</span></div><div class="sub-tech cov-none" title="T1556.002 — Password Filter DLL"><span class="sub-id">T1556.002</span><span class="sub-name">Password Filter DLL</span></div><div class="sub-tech cov-none" title="T1556.003 — Pluggable Authentication Modules"><span class="sub-id">T1556.003</span><span class="sub-name">Pluggable Authentication Modules</span></div><div class="sub-tech cov-none" title="T1556.004 — Network Device Authentication"><span class="sub-id">T1556.004</span><span class="sub-name">Network Device Authentication</span></div><div class="sub-tech cov-none" title="T1556.005 — Reversible Encryption"><span class="sub-id">T1556.005</span><span class="sub-name">Reversible Encryption</span></div><div class="sub-tech cov-none" title="T1556.006 — Multi-Factor Authentication"><span class="sub-id">T1556.006</span><span class="sub-name">Multi-Factor Authentication</span></div><div class="sub-tech cov-none" title="T1556.007 — Hybrid Identity"><span class="sub-id">T1556.007</span><span class="sub-name">Hybrid Identity</span></div><div class="sub-tech cov-none" title="T1556.008 — Network Provider DLL"><span class="sub-id">T1556.008</span><span class="sub-name">Network Provider DLL</span></div><div class="sub-tech cov-none" title="T1556.009 — Conditional Access Policies"><span class="sub-id">T1556.009</span><span class="sub-name">Conditional Access Policies</span></div></div></div>
+<div class="tech cov-none" data-techid="T1137" title="T1137 — Office Application Startup"><div class="tech-header"><div class="tech-id">T1137</div><span class="sub-badge">0/6</span></div><div class="tech-name">Office Application Startup</div><div class="subs"><div class="sub-tech cov-none" title="T1137.001 — Office Template Macros"><span class="sub-id">T1137.001</span><span class="sub-name">Office Template Macros</span></div><div class="sub-tech cov-none" title="T1137.002 — Office Test"><span class="sub-id">T1137.002</span><span class="sub-name">Office Test</span></div><div class="sub-tech cov-none" title="T1137.003 — Outlook Forms"><span class="sub-id">T1137.003</span><span class="sub-name">Outlook Forms</span></div><div class="sub-tech cov-none" title="T1137.004 — Outlook Home Page"><span class="sub-id">T1137.004</span><span class="sub-name">Outlook Home Page</span></div><div class="sub-tech cov-none" title="T1137.005 — Outlook Rules"><span class="sub-id">T1137.005</span><span class="sub-name">Outlook Rules</span></div><div class="sub-tech cov-none" title="T1137.006 — Add-ins"><span class="sub-id">T1137.006</span><span class="sub-name">Add-ins</span></div></div></div>
+<div class="tech cov-none" data-techid="T1653" title="T1653 — Power Settings"><div class="tech-header"><div class="tech-id">T1653</div></div><div class="tech-name">Power Settings</div></div>
+<div class="tech cov-none" data-techid="T1542" title="T1542 — Pre-OS Boot"><div class="tech-header"><div class="tech-id">T1542</div><span class="sub-badge">0/5</span></div><div class="tech-name">Pre-OS Boot</div><div class="subs"><div class="sub-tech cov-none" title="T1542.001 — System Firmware"><span class="sub-id">T1542.001</span><span class="sub-name">System Firmware</span></div><div class="sub-tech cov-none" title="T1542.002 — Component Firmware"><span class="sub-id">T1542.002</span><span class="sub-name">Component Firmware</span></div><div class="sub-tech cov-none" title="T1542.003 — Bootkit"><span class="sub-id">T1542.003</span><span class="sub-name">Bootkit</span></div><div class="sub-tech cov-none" title="T1542.004 — ROMMONkit"><span class="sub-id">T1542.004</span><span class="sub-name">ROMMONkit</span></div><div class="sub-tech cov-none" title="T1542.005 — TFTP Boot"><span class="sub-id">T1542.005</span><span class="sub-name">TFTP Boot</span></div></div></div>
+<div class="tech cov-nsig" data-techid="T1053" title="T1053 — Scheduled Task/Job"><div class="tech-header"><div class="tech-id">T1053</div></div><div class="tech-name">Scheduled Task/Job</div></div>
+<div class="tech cov-part" data-techid="T1505" title="T1505 — Server Software Component"><div class="tech-header"><div class="tech-id">T1505</div><span class="sub-badge">1/5</span></div><div class="tech-name">Server Software Component</div><div class="subs"><div class="sub-tech cov-none" title="T1505.001 — SQL Stored Procedures"><span class="sub-id">T1505.001</span><span class="sub-name">SQL Stored Procedures</span></div><div class="sub-tech cov-none" title="T1505.002 — Transport Agent"><span class="sub-id">T1505.002</span><span class="sub-name">Transport Agent</span></div><div class="sub-tech cov-sig" title="T1505.003 — Web Shell"><span class="sub-id">T1505.003</span><span class="sub-name">Web Shell</span></div><div class="sub-tech cov-none" title="T1505.004 — IIS Components"><span class="sub-id">T1505.004</span><span class="sub-name">IIS Components</span></div><div class="sub-tech cov-none" title="T1505.005 — Terminal Services DLL"><span class="sub-id">T1505.005</span><span class="sub-name">Terminal Services DLL</span></div></div></div>
+<div class="tech cov-none" data-techid="T1205" title="T1205 — Traffic Signaling"><div class="tech-header"><div class="tech-id">T1205</div><span class="sub-badge">0/2</span></div><div class="tech-name">Traffic Signaling</div><div class="subs"><div class="sub-tech cov-none" title="T1205.001 — Port Knocking"><span class="sub-id">T1205.001</span><span class="sub-name">Port Knocking</span></div><div class="sub-tech cov-none" title="T1205.002 — Socket Filters"><span class="sub-id">T1205.002</span><span class="sub-name">Socket Filters</span></div></div></div>
+<div class="tech cov-none" data-techid="T1078" title="T1078 — Valid Accounts"><div class="tech-header"><div class="tech-id">T1078</div></div><div class="tech-name">Valid Accounts</div></div>
+            </div>
+        </div>
+        
+
+        <div class="tactic-col">
+            <div class="tactic-header">
+                <div class="tactic-num">06</div>
+                <div class="tactic-meta">
+                    <div class="tactic-id">TA0004</div>
+                    <div class="tactic-name-en">Privilege Escalation</div>
+                </div>
+                <div class="tactic-name-ru">повышение привилегий</div>
+                <div class="tactic-count">13 техник</div>
+            </div>
+            <div class="tactic-body">
+                <div class="tech cov-none" data-techid="T1548" title="T1548 — Abuse Elevation Control Mechanism"><div class="tech-header"><div class="tech-id">T1548</div><span class="sub-badge">0/6</span></div><div class="tech-name">Abuse Elevation Control Mechanism</div><div class="subs"><div class="sub-tech cov-none" title="T1548.001 — Setuid and Setgid"><span class="sub-id">T1548.001</span><span class="sub-name">Setuid and Setgid</span></div><div class="sub-tech cov-none" title="T1548.002 — Bypass User Account Control"><span class="sub-id">T1548.002</span><span class="sub-name">Bypass User Account Control</span></div><div class="sub-tech cov-none" title="T1548.003 — Sudo and Sudo Caching"><span class="sub-id">T1548.003</span><span class="sub-name">Sudo and Sudo Caching</span></div><div class="sub-tech cov-none" title="T1548.004 — Elevated Execution with Prompt"><span class="sub-id">T1548.004</span><span class="sub-name">Elevated Execution with Prompt</span></div><div class="sub-tech cov-none" title="T1548.005 — Temporary Elevated Cloud Access"><span class="sub-id">T1548.005</span><span class="sub-name">Temporary Elevated Cloud Access</span></div><div class="sub-tech cov-none" title="T1548.006 — TCC Manipulation"><span class="sub-id">T1548.006</span><span class="sub-name">TCC Manipulation</span></div></div></div>
+<div class="tech cov-none" data-techid="T1134" title="T1134 — Access Token Manipulation"><div class="tech-header"><div class="tech-id">T1134</div><span class="sub-badge">0/5</span></div><div class="tech-name">Access Token Manipulation</div><div class="subs"><div class="sub-tech cov-none" title="T1134.001 — Token Impersonation/Theft"><span class="sub-id">T1134.001</span><span class="sub-name">Token Impersonation/Theft</span></div><div class="sub-tech cov-none" title="T1134.002 — Create Process with Token"><span class="sub-id">T1134.002</span><span class="sub-name">Create Process with Token</span></div><div class="sub-tech cov-none" title="T1134.003 — Make and Impersonate Token"><span class="sub-id">T1134.003</span><span class="sub-name">Make and Impersonate Token</span></div><div class="sub-tech cov-none" title="T1134.004 — Parent PID Spoofing"><span class="sub-id">T1134.004</span><span class="sub-name">Parent PID Spoofing</span></div><div class="sub-tech cov-none" title="T1134.005 — SID-History Injection"><span class="sub-id">T1134.005</span><span class="sub-name">SID-History Injection</span></div></div></div>
+<div class="tech cov-none" data-techid="T1547" title="T1547 — Boot or Logon Autostart Execution"><div class="tech-header"><div class="tech-id">T1547</div></div><div class="tech-name">Boot or Logon Autostart Execution</div></div>
+<div class="tech cov-none" data-techid="T1037" title="T1037 — Boot or Logon Initialization Scripts"><div class="tech-header"><div class="tech-id">T1037</div></div><div class="tech-name">Boot or Logon Initialization Scripts</div></div>
+<div class="tech cov-none" data-techid="T1543" title="T1543 — Create or Modify System Process"><div class="tech-header"><div class="tech-id">T1543</div></div><div class="tech-name">Create or Modify System Process</div></div>
+<div class="tech cov-none" data-techid="T1484" title="T1484 — Domain or Tenant Policy Modification"><div class="tech-header"><div class="tech-id">T1484</div><span class="sub-badge">0/2</span></div><div class="tech-name">Domain or Tenant Policy Modification</div><div class="subs"><div class="sub-tech cov-none" title="T1484.001 — Group Policy Modification"><span class="sub-id">T1484.001</span><span class="sub-name">Group Policy Modification</span></div><div class="sub-tech cov-none" title="T1484.002 — Trust Modification"><span class="sub-id">T1484.002</span><span class="sub-name">Trust Modification</span></div></div></div>
+<div class="tech cov-none" data-techid="T1611" title="T1611 — Escape to Host"><div class="tech-header"><div class="tech-id">T1611</div></div><div class="tech-name">Escape to Host</div></div>
+<div class="tech cov-none" data-techid="T1546" title="T1546 — Event Triggered Execution"><div class="tech-header"><div class="tech-id">T1546</div></div><div class="tech-name">Event Triggered Execution</div></div>
+<div class="tech cov-sig" data-techid="T1068" title="T1068 — Exploitation for Privilege Escalation"><div class="tech-header"><div class="tech-id">T1068</div></div><div class="tech-name">Exploitation for Privilege Escalation</div></div>
+<div class="tech cov-none" data-techid="T1574" title="T1574 — Hijack Execution Flow"><div class="tech-header"><div class="tech-id">T1574</div></div><div class="tech-name">Hijack Execution Flow</div></div>
+<div class="tech cov-none" data-techid="T1055" title="T1055 — Process Injection"><div class="tech-header"><div class="tech-id">T1055</div><span class="sub-badge">0/12</span></div><div class="tech-name">Process Injection</div><div class="subs"><div class="sub-tech cov-none" title="T1055.001 — Dynamic-link Library Injection"><span class="sub-id">T1055.001</span><span class="sub-name">Dynamic-link Library Injection</span></div><div class="sub-tech cov-none" title="T1055.002 — Portable Executable Injection"><span class="sub-id">T1055.002</span><span class="sub-name">Portable Executable Injection</span></div><div class="sub-tech cov-none" title="T1055.003 — Thread Execution Hijacking"><span class="sub-id">T1055.003</span><span class="sub-name">Thread Execution Hijacking</span></div><div class="sub-tech cov-none" title="T1055.004 — Asynchronous Procedure Call"><span class="sub-id">T1055.004</span><span class="sub-name">Asynchronous Procedure Call</span></div><div class="sub-tech cov-none" title="T1055.005 — Thread Local Storage"><span class="sub-id">T1055.005</span><span class="sub-name">Thread Local Storage</span></div><div class="sub-tech cov-none" title="T1055.008 — Ptrace System Calls"><span class="sub-id">T1055.008</span><span class="sub-name">Ptrace System Calls</span></div><div class="sub-tech cov-none" title="T1055.009 — Proc Memory"><span class="sub-id">T1055.009</span><span class="sub-name">Proc Memory</span></div><div class="sub-tech cov-none" title="T1055.011 — Extra Window Memory Injection"><span class="sub-id">T1055.011</span><span class="sub-name">Extra Window Memory Injection</span></div><div class="sub-tech cov-none" title="T1055.012 — Process Hollowing"><span class="sub-id">T1055.012</span><span class="sub-name">Process Hollowing</span></div><div class="sub-tech cov-none" title="T1055.013 — Process Doppelgänging"><span class="sub-id">T1055.013</span><span class="sub-name">Process Doppelgänging</span></div><div class="sub-tech cov-none" title="T1055.014 — VDSO Hijacking"><span class="sub-id">T1055.014</span><span class="sub-name">VDSO Hijacking</span></div><div class="sub-tech cov-none" title="T1055.015 — ListPlanting"><span class="sub-id">T1055.015</span><span class="sub-name">ListPlanting</span></div></div></div>
+<div class="tech cov-nsig" data-techid="T1053" title="T1053 — Scheduled Task/Job"><div class="tech-header"><div class="tech-id">T1053</div></div><div class="tech-name">Scheduled Task/Job</div></div>
+<div class="tech cov-none" data-techid="T1078" title="T1078 — Valid Accounts"><div class="tech-header"><div class="tech-id">T1078</div></div><div class="tech-name">Valid Accounts</div></div>
+            </div>
+        </div>
+        
+
+        <div class="tactic-col">
+            <div class="tactic-header">
+                <div class="tactic-num">07</div>
+                <div class="tactic-meta">
+                    <div class="tactic-id">TA0005</div>
+                    <div class="tactic-name-en">Defense Evasion</div>
+                </div>
+                <div class="tactic-name-ru">обход защиты</div>
+                <div class="tactic-count">42 техник</div>
+            </div>
+            <div class="tactic-body">
+                <div class="tech cov-none" data-techid="T1548" title="T1548 — Abuse Elevation Control Mechanism"><div class="tech-header"><div class="tech-id">T1548</div></div><div class="tech-name">Abuse Elevation Control Mechanism</div></div>
+<div class="tech cov-none" data-techid="T1134" title="T1134 — Access Token Manipulation"><div class="tech-header"><div class="tech-id">T1134</div></div><div class="tech-name">Access Token Manipulation</div></div>
+<div class="tech cov-sig" data-techid="T1197" title="T1197 — BITS Jobs"><div class="tech-header"><div class="tech-id">T1197</div></div><div class="tech-name">BITS Jobs</div></div>
+<div class="tech cov-none" data-techid="T1612" title="T1612 — Build Image on Host"><div class="tech-header"><div class="tech-id">T1612</div></div><div class="tech-name">Build Image on Host</div></div>
+<div class="tech cov-none" data-techid="T1622" title="T1622 — Debugger Evasion"><div class="tech-header"><div class="tech-id">T1622</div></div><div class="tech-name">Debugger Evasion</div></div>
+<div class="tech cov-none" data-techid="T1140" title="T1140 — Deobfuscate/Decode Files or Information"><div class="tech-header"><div class="tech-id">T1140</div></div><div class="tech-name">Deobfuscate/Decode Files or Information</div></div>
+<div class="tech cov-none" data-techid="T1610" title="T1610 — Deploy Container"><div class="tech-header"><div class="tech-id">T1610</div></div><div class="tech-name">Deploy Container</div></div>
+<div class="tech cov-none" data-techid="T1006" title="T1006 — Direct Volume Access"><div class="tech-header"><div class="tech-id">T1006</div></div><div class="tech-name">Direct Volume Access</div></div>
+<div class="tech cov-none" data-techid="T1484" title="T1484 — Domain or Tenant Policy Modification"><div class="tech-header"><div class="tech-id">T1484</div></div><div class="tech-name">Domain or Tenant Policy Modification</div></div>
+<div class="tech cov-none" data-techid="T1480" title="T1480 — Execution Guardrails"><div class="tech-header"><div class="tech-id">T1480</div><span class="sub-badge">0/1</span></div><div class="tech-name">Execution Guardrails</div><div class="subs"><div class="sub-tech cov-none" title="T1480.001 — Environmental Keying"><span class="sub-id">T1480.001</span><span class="sub-name">Environmental Keying</span></div></div></div>
+<div class="tech cov-none" data-techid="T1211" title="T1211 — Exploitation for Defense Evasion"><div class="tech-header"><div class="tech-id">T1211</div></div><div class="tech-name">Exploitation for Defense Evasion</div></div>
+<div class="tech cov-none" data-techid="T1222" title="T1222 — File and Directory Permissions Modification"><div class="tech-header"><div class="tech-id">T1222</div><span class="sub-badge">0/2</span></div><div class="tech-name">File and Directory Permissions Modification</div><div class="subs"><div class="sub-tech cov-none" title="T1222.001 — Windows File and Directory Permissions Modification"><span class="sub-id">T1222.001</span><span class="sub-name">Windows File and Directory Permissions Modification</span></div><div class="sub-tech cov-none" title="T1222.002 — Linux and Mac File and Directory Permissions Modification"><span class="sub-id">T1222.002</span><span class="sub-name">Linux and Mac File and Directory Permissions Modification</span></div></div></div>
+<div class="tech cov-none" data-techid="T1564" title="T1564 — Hide Artifacts"><div class="tech-header"><div class="tech-id">T1564</div><span class="sub-badge">0/12</span></div><div class="tech-name">Hide Artifacts</div><div class="subs"><div class="sub-tech cov-none" title="T1564.001 — Hidden Files and Directories"><span class="sub-id">T1564.001</span><span class="sub-name">Hidden Files and Directories</span></div><div class="sub-tech cov-none" title="T1564.002 — Hidden Users"><span class="sub-id">T1564.002</span><span class="sub-name">Hidden Users</span></div><div class="sub-tech cov-none" title="T1564.003 — Hidden Window"><span class="sub-id">T1564.003</span><span class="sub-name">Hidden Window</span></div><div class="sub-tech cov-none" title="T1564.004 — NTFS File Attributes"><span class="sub-id">T1564.004</span><span class="sub-name">NTFS File Attributes</span></div><div class="sub-tech cov-none" title="T1564.005 — Hidden File System"><span class="sub-id">T1564.005</span><span class="sub-name">Hidden File System</span></div><div class="sub-tech cov-none" title="T1564.006 — Run Virtual Instance"><span class="sub-id">T1564.006</span><span class="sub-name">Run Virtual Instance</span></div><div class="sub-tech cov-none" title="T1564.007 — VBA Stomping"><span class="sub-id">T1564.007</span><span class="sub-name">VBA Stomping</span></div><div class="sub-tech cov-none" title="T1564.008 — Email Hiding Rules"><span class="sub-id">T1564.008</span><span class="sub-name">Email Hiding Rules</span></div><div class="sub-tech cov-none" title="T1564.009 — Resource Forking"><span class="sub-id">T1564.009</span><span class="sub-name">Resource Forking</span></div><div class="sub-tech cov-none" title="T1564.010 — Process Argument Spoofing"><span class="sub-id">T1564.010</span><span class="sub-name">Process Argument Spoofing</span></div><div class="sub-tech cov-none" title="T1564.011 — Ignore Process Interrupts"><span class="sub-id">T1564.011</span><span class="sub-name">Ignore Process Interrupts</span></div><div class="sub-tech cov-none" title="T1564.012 — File/Path Exclusions"><span class="sub-id">T1564.012</span><span class="sub-name">File/Path Exclusions</span></div></div></div>
+<div class="tech cov-none" data-techid="T1574" title="T1574 — Hijack Execution Flow"><div class="tech-header"><div class="tech-id">T1574</div></div><div class="tech-name">Hijack Execution Flow</div></div>
+<div class="tech cov-none" data-techid="T1562" title="T1562 — Impair Defenses"><div class="tech-header"><div class="tech-id">T1562</div><span class="sub-badge">0/11</span></div><div class="tech-name">Impair Defenses</div><div class="subs"><div class="sub-tech cov-none" title="T1562.001 — Disable or Modify Tools"><span class="sub-id">T1562.001</span><span class="sub-name">Disable or Modify Tools</span></div><div class="sub-tech cov-none" title="T1562.002 — Disable Windows Event Logging"><span class="sub-id">T1562.002</span><span class="sub-name">Disable Windows Event Logging</span></div><div class="sub-tech cov-none" title="T1562.003 — Impair Command History Logging"><span class="sub-id">T1562.003</span><span class="sub-name">Impair Command History Logging</span></div><div class="sub-tech cov-none" title="T1562.004 — Disable or Modify System Firewall"><span class="sub-id">T1562.004</span><span class="sub-name">Disable or Modify System Firewall</span></div><div class="sub-tech cov-none" title="T1562.006 — Indicator Blocking"><span class="sub-id">T1562.006</span><span class="sub-name">Indicator Blocking</span></div><div class="sub-tech cov-none" title="T1562.007 — Disable or Modify Cloud Firewall"><span class="sub-id">T1562.007</span><span class="sub-name">Disable or Modify Cloud Firewall</span></div><div class="sub-tech cov-none" title="T1562.008 — Disable or Modify Cloud Logs"><span class="sub-id">T1562.008</span><span class="sub-name">Disable or Modify Cloud Logs</span></div><div class="sub-tech cov-none" title="T1562.009 — Safe Mode Boot"><span class="sub-id">T1562.009</span><span class="sub-name">Safe Mode Boot</span></div><div class="sub-tech cov-none" title="T1562.010 — Downgrade Attack"><span class="sub-id">T1562.010</span><span class="sub-name">Downgrade Attack</span></div><div class="sub-tech cov-none" title="T1562.011 — Spoof Security Alerting"><span class="sub-id">T1562.011</span><span class="sub-name">Spoof Security Alerting</span></div><div class="sub-tech cov-none" title="T1562.012 — Disable or Modify Linux Audit System"><span class="sub-id">T1562.012</span><span class="sub-name">Disable or Modify Linux Audit System</span></div></div></div>
+<div class="tech cov-none" data-techid="T1656" title="T1656 — Impersonation"><div class="tech-header"><div class="tech-id">T1656</div></div><div class="tech-name">Impersonation</div></div>
+<div class="tech cov-none" data-techid="T1070" title="T1070 — Indicator Removal"><div class="tech-header"><div class="tech-id">T1070</div><span class="sub-badge">0/9</span></div><div class="tech-name">Indicator Removal</div><div class="subs"><div class="sub-tech cov-none" title="T1070.001 — Clear Windows Event Logs"><span class="sub-id">T1070.001</span><span class="sub-name">Clear Windows Event Logs</span></div><div class="sub-tech cov-none" title="T1070.002 — Clear Linux or Mac System Logs"><span class="sub-id">T1070.002</span><span class="sub-name">Clear Linux or Mac System Logs</span></div><div class="sub-tech cov-none" title="T1070.003 — Clear Command History"><span class="sub-id">T1070.003</span><span class="sub-name">Clear Command History</span></div><div class="sub-tech cov-none" title="T1070.004 — File Deletion"><span class="sub-id">T1070.004</span><span class="sub-name">File Deletion</span></div><div class="sub-tech cov-none" title="T1070.005 — Network Share Connection Removal"><span class="sub-id">T1070.005</span><span class="sub-name">Network Share Connection Removal</span></div><div class="sub-tech cov-none" title="T1070.006 — Timestomp"><span class="sub-id">T1070.006</span><span class="sub-name">Timestomp</span></div><div class="sub-tech cov-none" title="T1070.007 — Clear Network Connection History and Configurations"><span class="sub-id">T1070.007</span><span class="sub-name">Clear Network Connection History and Configurations</span></div><div class="sub-tech cov-none" title="T1070.008 — Clear Mailbox Data"><span class="sub-id">T1070.008</span><span class="sub-name">Clear Mailbox Data</span></div><div class="sub-tech cov-none" title="T1070.009 — Clear Persistence"><span class="sub-id">T1070.009</span><span class="sub-name">Clear Persistence</span></div></div></div>
+<div class="tech cov-none" data-techid="T1202" title="T1202 — Indirect Command Execution"><div class="tech-header"><div class="tech-id">T1202</div></div><div class="tech-name">Indirect Command Execution</div></div>
+<div class="tech cov-none" data-techid="T1036" title="T1036 — Masquerading"><div class="tech-header"><div class="tech-id">T1036</div><span class="sub-badge">0/10</span></div><div class="tech-name">Masquerading</div><div class="subs"><div class="sub-tech cov-none" title="T1036.001 — Invalid Code Signature"><span class="sub-id">T1036.001</span><span class="sub-name">Invalid Code Signature</span></div><div class="sub-tech cov-none" title="T1036.002 — Right-to-Left Override"><span class="sub-id">T1036.002</span><span class="sub-name">Right-to-Left Override</span></div><div class="sub-tech cov-none" title="T1036.003 — Rename System Utilities"><span class="sub-id">T1036.003</span><span class="sub-name">Rename System Utilities</span></div><div class="sub-tech cov-none" title="T1036.004 — Masquerade Task or Service"><span class="sub-id">T1036.004</span><span class="sub-name">Masquerade Task or Service</span></div><div class="sub-tech cov-none" title="T1036.005 — Match Legitimate Name or Location"><span class="sub-id">T1036.005</span><span class="sub-name">Match Legitimate Name or Location</span></div><div class="sub-tech cov-none" title="T1036.006 — Space after Filename"><span class="sub-id">T1036.006</span><span class="sub-name">Space after Filename</span></div><div class="sub-tech cov-none" title="T1036.007 — Double File Extension"><span class="sub-id">T1036.007</span><span class="sub-name">Double File Extension</span></div><div class="sub-tech cov-none" title="T1036.008 — Masquerade File Type"><span class="sub-id">T1036.008</span><span class="sub-name">Masquerade File Type</span></div><div class="sub-tech cov-none" title="T1036.009 — Break Process Trees"><span class="sub-id">T1036.009</span><span class="sub-name">Break Process Trees</span></div><div class="sub-tech cov-none" title="T1036.010 — Masquerade Account Name"><span class="sub-id">T1036.010</span><span class="sub-name">Masquerade Account Name</span></div></div></div>
+<div class="tech cov-none" data-techid="T1556" title="T1556 — Modify Authentication Process"><div class="tech-header"><div class="tech-id">T1556</div></div><div class="tech-name">Modify Authentication Process</div></div>
+<div class="tech cov-none" data-techid="T1578" title="T1578 — Modify Cloud Compute Infrastructure"><div class="tech-header"><div class="tech-id">T1578</div><span class="sub-badge">0/5</span></div><div class="tech-name">Modify Cloud Compute Infrastructure</div><div class="subs"><div class="sub-tech cov-none" title="T1578.001 — Create Snapshot"><span class="sub-id">T1578.001</span><span class="sub-name">Create Snapshot</span></div><div class="sub-tech cov-none" title="T1578.002 — Create Cloud Instance"><span class="sub-id">T1578.002</span><span class="sub-name">Create Cloud Instance</span></div><div class="sub-tech cov-none" title="T1578.003 — Delete Cloud Instance"><span class="sub-id">T1578.003</span><span class="sub-name">Delete Cloud Instance</span></div><div class="sub-tech cov-none" title="T1578.004 — Revert Cloud Instance"><span class="sub-id">T1578.004</span><span class="sub-name">Revert Cloud Instance</span></div><div class="sub-tech cov-none" title="T1578.005 — Modify Cloud Compute Configurations"><span class="sub-id">T1578.005</span><span class="sub-name">Modify Cloud Compute Configurations</span></div></div></div>
+<div class="tech cov-nsig" data-techid="T1112" title="T1112 — Modify Registry"><div class="tech-header"><div class="tech-id">T1112</div></div><div class="tech-name">Modify Registry</div></div>
+<div class="tech cov-none" data-techid="T1601" title="T1601 — Modify System Image"><div class="tech-header"><div class="tech-id">T1601</div><span class="sub-badge">0/2</span></div><div class="tech-name">Modify System Image</div><div class="subs"><div class="sub-tech cov-none" title="T1601.001 — Patch System Image"><span class="sub-id">T1601.001</span><span class="sub-name">Patch System Image</span></div><div class="sub-tech cov-none" title="T1601.002 — Downgrade System Image"><span class="sub-id">T1601.002</span><span class="sub-name">Downgrade System Image</span></div></div></div>
+<div class="tech cov-none" data-techid="T1599" title="T1599 — Network Boundary Bridging"><div class="tech-header"><div class="tech-id">T1599</div><span class="sub-badge">0/1</span></div><div class="tech-name">Network Boundary Bridging</div><div class="subs"><div class="sub-tech cov-none" title="T1599.001 — Network Address Translation Traversal"><span class="sub-id">T1599.001</span><span class="sub-name">Network Address Translation Traversal</span></div></div></div>
+<div class="tech cov-part" data-techid="T1027" title="T1027 — Obfuscated Files or Information"><div class="tech-header"><div class="tech-id">T1027</div><span class="sub-badge">3/15</span></div><div class="tech-name">Obfuscated Files or Information</div><div class="subs"><div class="sub-tech cov-none" title="T1027.001 — Binary Padding"><span class="sub-id">T1027.001</span><span class="sub-name">Binary Padding</span></div><div class="sub-tech cov-none" title="T1027.002 — Software Packing"><span class="sub-id">T1027.002</span><span class="sub-name">Software Packing</span></div><div class="sub-tech cov-none" title="T1027.003 — Steganography"><span class="sub-id">T1027.003</span><span class="sub-name">Steganography</span></div><div class="sub-tech cov-none" title="T1027.004 — Compile After Delivery"><span class="sub-id">T1027.004</span><span class="sub-name">Compile After Delivery</span></div><div class="sub-tech cov-none" title="T1027.005 — Indicator Removal from Tools"><span class="sub-id">T1027.005</span><span class="sub-name">Indicator Removal from Tools</span></div><div class="sub-tech cov-sig" title="T1027.006 — HTML Smuggling"><span class="sub-id">T1027.006</span><span class="sub-name">HTML Smuggling</span></div><div class="sub-tech cov-none" title="T1027.007 — Dynamic API Resolution"><span class="sub-id">T1027.007</span><span class="sub-name">Dynamic API Resolution</span></div><div class="sub-tech cov-none" title="T1027.008 — Stripped Payloads"><span class="sub-id">T1027.008</span><span class="sub-name">Stripped Payloads</span></div><div class="sub-tech cov-none" title="T1027.009 — Embedded Payloads"><span class="sub-id">T1027.009</span><span class="sub-name">Embedded Payloads</span></div><div class="sub-tech cov-sig" title="T1027.010 — Command Obfuscation"><span class="sub-id">T1027.010</span><span class="sub-name">Command Obfuscation</span></div><div class="sub-tech cov-none" title="T1027.011 — Fileless Storage"><span class="sub-id">T1027.011</span><span class="sub-name">Fileless Storage</span></div><div class="sub-tech cov-none" title="T1027.012 — LNK Icon Smuggling"><span class="sub-id">T1027.012</span><span class="sub-name">LNK Icon Smuggling</span></div><div class="sub-tech cov-sig" title="T1027.013 — Encrypted/Encoded File"><span class="sub-id">T1027.013</span><span class="sub-name">Encrypted/Encoded File</span></div><div class="sub-tech cov-none" title="T1027.014 — Polymorphic Code"><span class="sub-id">T1027.014</span><span class="sub-name">Polymorphic Code</span></div><div class="sub-tech cov-none" title="T1027.015 — Compression"><span class="sub-id">T1027.015</span><span class="sub-name">Compression</span></div></div></div>
+<div class="tech cov-none" data-techid="T1647" title="T1647 — Plist File Modification"><div class="tech-header"><div class="tech-id">T1647</div></div><div class="tech-name">Plist File Modification</div></div>
+<div class="tech cov-none" data-techid="T1055" title="T1055 — Process Injection"><div class="tech-header"><div class="tech-id">T1055</div></div><div class="tech-name">Process Injection</div></div>
+<div class="tech cov-none" data-techid="T1620" title="T1620 — Reflective Code Loading"><div class="tech-header"><div class="tech-id">T1620</div></div><div class="tech-name">Reflective Code Loading</div></div>
+<div class="tech cov-none" data-techid="T1207" title="T1207 — Rogue Domain Controller"><div class="tech-header"><div class="tech-id">T1207</div></div><div class="tech-name">Rogue Domain Controller</div></div>
+<div class="tech cov-none" data-techid="T1014" title="T1014 — Rootkit"><div class="tech-header"><div class="tech-id">T1014</div></div><div class="tech-name">Rootkit</div></div>
+<div class="tech cov-none" data-techid="T1553" title="T1553 — Subvert Trust Controls"><div class="tech-header"><div class="tech-id">T1553</div><span class="sub-badge">0/6</span></div><div class="tech-name">Subvert Trust Controls</div><div class="subs"><div class="sub-tech cov-none" title="T1553.001 — Gatekeeper Bypass"><span class="sub-id">T1553.001</span><span class="sub-name">Gatekeeper Bypass</span></div><div class="sub-tech cov-none" title="T1553.002 — Code Signing"><span class="sub-id">T1553.002</span><span class="sub-name">Code Signing</span></div><div class="sub-tech cov-none" title="T1553.003 — SIP and Trust Provider Hijacking"><span class="sub-id">T1553.003</span><span class="sub-name">SIP and Trust Provider Hijacking</span></div><div class="sub-tech cov-none" title="T1553.004 — Install Root Certificate"><span class="sub-id">T1553.004</span><span class="sub-name">Install Root Certificate</span></div><div class="sub-tech cov-none" title="T1553.005 — Mark-of-the-Web Bypass"><span class="sub-id">T1553.005</span><span class="sub-name">Mark-of-the-Web Bypass</span></div><div class="sub-tech cov-none" title="T1553.006 — Code Signing Policy Modification"><span class="sub-id">T1553.006</span><span class="sub-name">Code Signing Policy Modification</span></div></div></div>
+<div class="tech cov-none" data-techid="T1218" title="T1218 — System Binary Proxy Execution"><div class="tech-header"><div class="tech-id">T1218</div><span class="sub-badge">0/14</span></div><div class="tech-name">System Binary Proxy Execution</div><div class="subs"><div class="sub-tech cov-none" title="T1218.001 — Compiled HTML File"><span class="sub-id">T1218.001</span><span class="sub-name">Compiled HTML File</span></div><div class="sub-tech cov-none" title="T1218.002 — Control Panel"><span class="sub-id">T1218.002</span><span class="sub-name">Control Panel</span></div><div class="sub-tech cov-none" title="T1218.003 — CMSTP"><span class="sub-id">T1218.003</span><span class="sub-name">CMSTP</span></div><div class="sub-tech cov-none" title="T1218.004 — InstallUtil"><span class="sub-id">T1218.004</span><span class="sub-name">InstallUtil</span></div><div class="sub-tech cov-none" title="T1218.005 — Mshta"><span class="sub-id">T1218.005</span><span class="sub-name">Mshta</span></div><div class="sub-tech cov-none" title="T1218.007 — Msiexec"><span class="sub-id">T1218.007</span><span class="sub-name">Msiexec</span></div><div class="sub-tech cov-none" title="T1218.008 — Odbcconf"><span class="sub-id">T1218.008</span><span class="sub-name">Odbcconf</span></div><div class="sub-tech cov-none" title="T1218.009 — Regsvcs/Regasm"><span class="sub-id">T1218.009</span><span class="sub-name">Regsvcs/Regasm</span></div><div class="sub-tech cov-none" title="T1218.010 — Regsvr32"><span class="sub-id">T1218.010</span><span class="sub-name">Regsvr32</span></div><div class="sub-tech cov-none" title="T1218.011 — Rundll32"><span class="sub-id">T1218.011</span><span class="sub-name">Rundll32</span></div><div class="sub-tech cov-none" title="T1218.012 — Verclsid"><span class="sub-id">T1218.012</span><span class="sub-name">Verclsid</span></div><div class="sub-tech cov-none" title="T1218.013 — Mavinject"><span class="sub-id">T1218.013</span><span class="sub-name">Mavinject</span></div><div class="sub-tech cov-none" title="T1218.014 — MMC"><span class="sub-id">T1218.014</span><span class="sub-name">MMC</span></div><div class="sub-tech cov-none" title="T1218.015 — Electron Applications"><span class="sub-id">T1218.015</span><span class="sub-name">Electron Applications</span></div></div></div>
+<div class="tech cov-none" data-techid="T1216" title="T1216 — System Script Proxy Execution"><div class="tech-header"><div class="tech-id">T1216</div><span class="sub-badge">0/2</span></div><div class="tech-name">System Script Proxy Execution</div><div class="subs"><div class="sub-tech cov-none" title="T1216.001 — PubPrn"><span class="sub-id">T1216.001</span><span class="sub-name">PubPrn</span></div><div class="sub-tech cov-none" title="T1216.002 — SyncAppvPublishingServer"><span class="sub-id">T1216.002</span><span class="sub-name">SyncAppvPublishingServer</span></div></div></div>
+<div class="tech cov-none" data-techid="T1221" title="T1221 — Template Injection"><div class="tech-header"><div class="tech-id">T1221</div></div><div class="tech-name">Template Injection</div></div>
+<div class="tech cov-none" data-techid="T1205" title="T1205 — Traffic Signaling"><div class="tech-header"><div class="tech-id">T1205</div></div><div class="tech-name">Traffic Signaling</div></div>
+<div class="tech cov-none" data-techid="T1127" title="T1127 — Trusted Developer Utilities Proxy Execution"><div class="tech-header"><div class="tech-id">T1127</div><span class="sub-badge">0/2</span></div><div class="tech-name">Trusted Developer Utilities Proxy Execution</div><div class="subs"><div class="sub-tech cov-none" title="T1127.001 — MSBuild"><span class="sub-id">T1127.001</span><span class="sub-name">MSBuild</span></div><div class="sub-tech cov-none" title="T1127.002 — ClickOnce"><span class="sub-id">T1127.002</span><span class="sub-name">ClickOnce</span></div></div></div>
+<div class="tech cov-none" data-techid="T1535" title="T1535 — Unused/Unsupported Cloud Regions"><div class="tech-header"><div class="tech-id">T1535</div></div><div class="tech-name">Unused/Unsupported Cloud Regions</div></div>
+<div class="tech cov-none" data-techid="T1550" title="T1550 — Use Alternate Authentication Material"><div class="tech-header"><div class="tech-id">T1550</div><span class="sub-badge">0/4</span></div><div class="tech-name">Use Alternate Authentication Material</div><div class="subs"><div class="sub-tech cov-none" title="T1550.001 — Application Access Token"><span class="sub-id">T1550.001</span><span class="sub-name">Application Access Token</span></div><div class="sub-tech cov-none" title="T1550.002 — Pass the Hash"><span class="sub-id">T1550.002</span><span class="sub-name">Pass the Hash</span></div><div class="sub-tech cov-none" title="T1550.003 — Pass the Ticket"><span class="sub-id">T1550.003</span><span class="sub-name">Pass the Ticket</span></div><div class="sub-tech cov-none" title="T1550.004 — Web Session Cookie"><span class="sub-id">T1550.004</span><span class="sub-name">Web Session Cookie</span></div></div></div>
+<div class="tech cov-none" data-techid="T1078" title="T1078 — Valid Accounts"><div class="tech-header"><div class="tech-id">T1078</div></div><div class="tech-name">Valid Accounts</div></div>
+<div class="tech cov-none" data-techid="T1497" title="T1497 — Virtualization/Sandbox Evasion"><div class="tech-header"><div class="tech-id">T1497</div><span class="sub-badge">0/3</span></div><div class="tech-name">Virtualization/Sandbox Evasion</div><div class="subs"><div class="sub-tech cov-none" title="T1497.001 — System Checks"><span class="sub-id">T1497.001</span><span class="sub-name">System Checks</span></div><div class="sub-tech cov-none" title="T1497.002 — User Activity Based Checks"><span class="sub-id">T1497.002</span><span class="sub-name">User Activity Based Checks</span></div><div class="sub-tech cov-none" title="T1497.003 — Time Based Evasion"><span class="sub-id">T1497.003</span><span class="sub-name">Time Based Evasion</span></div></div></div>
+<div class="tech cov-none" data-techid="T1600" title="T1600 — Weaken Encryption"><div class="tech-header"><div class="tech-id">T1600</div><span class="sub-badge">0/2</span></div><div class="tech-name">Weaken Encryption</div><div class="subs"><div class="sub-tech cov-none" title="T1600.001 — Reduce Key Space"><span class="sub-id">T1600.001</span><span class="sub-name">Reduce Key Space</span></div><div class="sub-tech cov-none" title="T1600.002 — Disable Crypto Hardware"><span class="sub-id">T1600.002</span><span class="sub-name">Disable Crypto Hardware</span></div></div></div>
+<div class="tech cov-none" data-techid="T1220" title="T1220 — XSL Script Processing"><div class="tech-header"><div class="tech-id">T1220</div></div><div class="tech-name">XSL Script Processing</div></div>
+            </div>
+        </div>
+        
+
+        <div class="tactic-col">
+            <div class="tactic-header">
+                <div class="tactic-num">08</div>
+                <div class="tactic-meta">
+                    <div class="tactic-id">TA0006</div>
+                    <div class="tactic-name-en">Credential Access</div>
+                </div>
+                <div class="tactic-name-ru">доступ к учетным данным</div>
+                <div class="tactic-count">17 техник</div>
+            </div>
+            <div class="tactic-body">
+                <div class="tech cov-part" data-techid="T1557" title="T1557 — Adversary-in-the-Middle"><div class="tech-header"><div class="tech-id">T1557</div><span class="sub-badge">1/4</span></div><div class="tech-name">Adversary-in-the-Middle</div><div class="subs"><div class="sub-tech cov-nsig" title="T1557.001 — LLMNR/NBT-NS Poisoning and SMB Relay"><span class="sub-id">T1557.001</span><span class="sub-name">LLMNR/NBT-NS Poisoning and SMB Relay</span></div><div class="sub-tech cov-none" title="T1557.002 — ARP Cache Poisoning"><span class="sub-id">T1557.002</span><span class="sub-name">ARP Cache Poisoning</span></div><div class="sub-tech cov-none" title="T1557.003 — DHCP Spoofing"><span class="sub-id">T1557.003</span><span class="sub-name">DHCP Spoofing</span></div><div class="sub-tech cov-none" title="T1557.004 — Evil Twin"><span class="sub-id">T1557.004</span><span class="sub-name">Evil Twin</span></div></div></div>
+<div class="tech cov-part" data-techid="T1110" title="T1110 — Brute Force"><div class="tech-header"><div class="tech-id">T1110</div><span class="sub-badge">3/4</span></div><div class="tech-name">Brute Force</div><div class="subs"><div class="sub-tech cov-sig" title="T1110.001 — Password Guessing"><span class="sub-id">T1110.001</span><span class="sub-name">Password Guessing</span></div><div class="sub-tech cov-none" title="T1110.002 — Password Cracking"><span class="sub-id">T1110.002</span><span class="sub-name">Password Cracking</span></div><div class="sub-tech cov-nsig" title="T1110.003 — Password Spraying"><span class="sub-id">T1110.003</span><span class="sub-name">Password Spraying</span></div><div class="sub-tech cov-sig" title="T1110.004 — Credential Stuffing"><span class="sub-id">T1110.004</span><span class="sub-name">Credential Stuffing</span></div></div></div>
+<div class="tech cov-none" data-techid="T1555" title="T1555 — Credentials from Password Stores"><div class="tech-header"><div class="tech-id">T1555</div><span class="sub-badge">0/6</span></div><div class="tech-name">Credentials from Password Stores</div><div class="subs"><div class="sub-tech cov-none" title="T1555.001 — Keychain"><span class="sub-id">T1555.001</span><span class="sub-name">Keychain</span></div><div class="sub-tech cov-none" title="T1555.002 — Securityd Memory"><span class="sub-id">T1555.002</span><span class="sub-name">Securityd Memory</span></div><div class="sub-tech cov-none" title="T1555.003 — Credentials from Web Browsers"><span class="sub-id">T1555.003</span><span class="sub-name">Credentials from Web Browsers</span></div><div class="sub-tech cov-none" title="T1555.004 — Windows Credential Manager"><span class="sub-id">T1555.004</span><span class="sub-name">Windows Credential Manager</span></div><div class="sub-tech cov-none" title="T1555.005 — Password Managers"><span class="sub-id">T1555.005</span><span class="sub-name">Password Managers</span></div><div class="sub-tech cov-none" title="T1555.006 — Cloud Secrets Management Stores"><span class="sub-id">T1555.006</span><span class="sub-name">Cloud Secrets Management Stores</span></div></div></div>
+<div class="tech cov-nsig" data-techid="T1212" title="T1212 — Exploitation for Credential Access"><div class="tech-header"><div class="tech-id">T1212</div></div><div class="tech-name">Exploitation for Credential Access</div></div>
+<div class="tech cov-nsig" data-techid="T1187" title="T1187 — Forced Authentication"><div class="tech-header"><div class="tech-id">T1187</div></div><div class="tech-name">Forced Authentication</div></div>
+<div class="tech cov-none" data-techid="T1606" title="T1606 — Forge Web Credentials"><div class="tech-header"><div class="tech-id">T1606</div><span class="sub-badge">0/2</span></div><div class="tech-name">Forge Web Credentials</div><div class="subs"><div class="sub-tech cov-none" title="T1606.001 — Web Cookies"><span class="sub-id">T1606.001</span><span class="sub-name">Web Cookies</span></div><div class="sub-tech cov-none" title="T1606.002 — SAML Tokens"><span class="sub-id">T1606.002</span><span class="sub-name">SAML Tokens</span></div></div></div>
+<div class="tech cov-none" data-techid="T1056" title="T1056 — Input Capture"><div class="tech-header"><div class="tech-id">T1056</div><span class="sub-badge">0/4</span></div><div class="tech-name">Input Capture</div><div class="subs"><div class="sub-tech cov-none" title="T1056.001 — Keylogging"><span class="sub-id">T1056.001</span><span class="sub-name">Keylogging</span></div><div class="sub-tech cov-none" title="T1056.002 — GUI Input Capture"><span class="sub-id">T1056.002</span><span class="sub-name">GUI Input Capture</span></div><div class="sub-tech cov-none" title="T1056.003 — Web Portal Capture"><span class="sub-id">T1056.003</span><span class="sub-name">Web Portal Capture</span></div><div class="sub-tech cov-none" title="T1056.004 — Credential API Hooking"><span class="sub-id">T1056.004</span><span class="sub-name">Credential API Hooking</span></div></div></div>
+<div class="tech cov-none" data-techid="T1556" title="T1556 — Modify Authentication Process"><div class="tech-header"><div class="tech-id">T1556</div></div><div class="tech-name">Modify Authentication Process</div></div>
+<div class="tech cov-none" data-techid="T1111" title="T1111 — Multi-Factor Authentication Interception"><div class="tech-header"><div class="tech-id">T1111</div></div><div class="tech-name">Multi-Factor Authentication Interception</div></div>
+<div class="tech cov-none" data-techid="T1621" title="T1621 — Multi-Factor Authentication Request Generation"><div class="tech-header"><div class="tech-id">T1621</div></div><div class="tech-name">Multi-Factor Authentication Request Generation</div></div>
+<div class="tech cov-none" data-techid="T1040" title="T1040 — Network Sniffing"><div class="tech-header"><div class="tech-id">T1040</div></div><div class="tech-name">Network Sniffing</div></div>
+<div class="tech cov-part" data-techid="T1003" title="T1003 — OS Credential Dumping"><div class="tech-header"><div class="tech-id">T1003</div><span class="sub-badge">4/8</span></div><div class="tech-name">OS Credential Dumping</div><div class="subs"><div class="sub-tech cov-nsig" title="T1003.001 — LSASS Memory"><span class="sub-id">T1003.001</span><span class="sub-name">LSASS Memory</span></div><div class="sub-tech cov-nsig" title="T1003.002 — Security Account Manager"><span class="sub-id">T1003.002</span><span class="sub-name">Security Account Manager</span></div><div class="sub-tech cov-nsig" title="T1003.003 — NTDS"><span class="sub-id">T1003.003</span><span class="sub-name">NTDS</span></div><div class="sub-tech cov-none" title="T1003.004 — LSA Secrets"><span class="sub-id">T1003.004</span><span class="sub-name">LSA Secrets</span></div><div class="sub-tech cov-none" title="T1003.005 — Cached Domain Credentials"><span class="sub-id">T1003.005</span><span class="sub-name">Cached Domain Credentials</span></div><div class="sub-tech cov-nsig" title="T1003.006 — DCSync"><span class="sub-id">T1003.006</span><span class="sub-name">DCSync</span></div><div class="sub-tech cov-none" title="T1003.007 — Proc Filesystem"><span class="sub-id">T1003.007</span><span class="sub-name">Proc Filesystem</span></div><div class="sub-tech cov-none" title="T1003.008 — /etc/passwd and /etc/shadow"><span class="sub-id">T1003.008</span><span class="sub-name">/etc/passwd and /etc/shadow</span></div></div></div>
+<div class="tech cov-none" data-techid="T1528" title="T1528 — Steal Application Access Token"><div class="tech-header"><div class="tech-id">T1528</div></div><div class="tech-name">Steal Application Access Token</div></div>
+<div class="tech cov-none" data-techid="T1649" title="T1649 — Steal or Forge Authentication Certificates"><div class="tech-header"><div class="tech-id">T1649</div></div><div class="tech-name">Steal or Forge Authentication Certificates</div></div>
+<div class="tech cov-part" data-techid="T1558" title="T1558 — Steal or Forge Kerberos Tickets"><div class="tech-header"><div class="tech-id">T1558</div><span class="sub-badge">1/5</span></div><div class="tech-name">Steal or Forge Kerberos Tickets</div><div class="subs"><div class="sub-tech cov-none" title="T1558.001 — Golden Ticket"><span class="sub-id">T1558.001</span><span class="sub-name">Golden Ticket</span></div><div class="sub-tech cov-none" title="T1558.002 — Silver Ticket"><span class="sub-id">T1558.002</span><span class="sub-name">Silver Ticket</span></div><div class="sub-tech cov-nsig" title="T1558.003 — Kerberoasting"><span class="sub-id">T1558.003</span><span class="sub-name">Kerberoasting</span></div><div class="sub-tech cov-none" title="T1558.004 — AS-REP Roasting"><span class="sub-id">T1558.004</span><span class="sub-name">AS-REP Roasting</span></div><div class="sub-tech cov-none" title="T1558.005 — Ccache Files"><span class="sub-id">T1558.005</span><span class="sub-name">Ccache Files</span></div></div></div>
+<div class="tech cov-none" data-techid="T1539" title="T1539 — Steal Web Session Cookie"><div class="tech-header"><div class="tech-id">T1539</div></div><div class="tech-name">Steal Web Session Cookie</div></div>
+<div class="tech cov-none" data-techid="T1552" title="T1552 — Unsecured Credentials"><div class="tech-header"><div class="tech-id">T1552</div><span class="sub-badge">0/8</span></div><div class="tech-name">Unsecured Credentials</div><div class="subs"><div class="sub-tech cov-none" title="T1552.001 — Credentials In Files"><span class="sub-id">T1552.001</span><span class="sub-name">Credentials In Files</span></div><div class="sub-tech cov-none" title="T1552.002 — Credentials in Registry"><span class="sub-id">T1552.002</span><span class="sub-name">Credentials in Registry</span></div><div class="sub-tech cov-none" title="T1552.003 — Bash History"><span class="sub-id">T1552.003</span><span class="sub-name">Bash History</span></div><div class="sub-tech cov-none" title="T1552.004 — Private Keys"><span class="sub-id">T1552.004</span><span class="sub-name">Private Keys</span></div><div class="sub-tech cov-none" title="T1552.005 — Cloud Instance Metadata API"><span class="sub-id">T1552.005</span><span class="sub-name">Cloud Instance Metadata API</span></div><div class="sub-tech cov-none" title="T1552.006 — Group Policy Preferences"><span class="sub-id">T1552.006</span><span class="sub-name">Group Policy Preferences</span></div><div class="sub-tech cov-none" title="T1552.007 — Container API"><span class="sub-id">T1552.007</span><span class="sub-name">Container API</span></div><div class="sub-tech cov-none" title="T1552.008 — Chat Messages"><span class="sub-id">T1552.008</span><span class="sub-name">Chat Messages</span></div></div></div>
+            </div>
+        </div>
+        
+
+        <div class="tactic-col">
+            <div class="tactic-header">
+                <div class="tactic-num">09</div>
+                <div class="tactic-meta">
+                    <div class="tactic-id">TA0007</div>
+                    <div class="tactic-name-en">Discovery</div>
+                </div>
+                <div class="tactic-name-ru">изучение инфраструктуры</div>
+                <div class="tactic-count">32 техник</div>
+            </div>
+            <div class="tactic-body">
+                <div class="tech cov-none" data-techid="T1087" title="T1087 — Account Discovery"><div class="tech-header"><div class="tech-id">T1087</div><span class="sub-badge">0/4</span></div><div class="tech-name">Account Discovery</div><div class="subs"><div class="sub-tech cov-none" title="T1087.001 — Local Account"><span class="sub-id">T1087.001</span><span class="sub-name">Local Account</span></div><div class="sub-tech cov-none" title="T1087.002 — Domain Account"><span class="sub-id">T1087.002</span><span class="sub-name">Domain Account</span></div><div class="sub-tech cov-none" title="T1087.003 — Email Account"><span class="sub-id">T1087.003</span><span class="sub-name">Email Account</span></div><div class="sub-tech cov-none" title="T1087.004 — Cloud Account"><span class="sub-id">T1087.004</span><span class="sub-name">Cloud Account</span></div></div></div>
+<div class="tech cov-none" data-techid="T1010" title="T1010 — Application Window Discovery"><div class="tech-header"><div class="tech-id">T1010</div></div><div class="tech-name">Application Window Discovery</div></div>
+<div class="tech cov-none" data-techid="T1217" title="T1217 — Browser Information Discovery"><div class="tech-header"><div class="tech-id">T1217</div></div><div class="tech-name">Browser Information Discovery</div></div>
+<div class="tech cov-none" data-techid="T1580" title="T1580 — Cloud Infrastructure Discovery"><div class="tech-header"><div class="tech-id">T1580</div></div><div class="tech-name">Cloud Infrastructure Discovery</div></div>
+<div class="tech cov-none" data-techid="T1538" title="T1538 — Cloud Service Dashboard"><div class="tech-header"><div class="tech-id">T1538</div></div><div class="tech-name">Cloud Service Dashboard</div></div>
+<div class="tech cov-none" data-techid="T1526" title="T1526 — Cloud Service Discovery"><div class="tech-header"><div class="tech-id">T1526</div></div><div class="tech-name">Cloud Service Discovery</div></div>
+<div class="tech cov-none" data-techid="T1619" title="T1619 — Cloud Storage Object Discovery"><div class="tech-header"><div class="tech-id">T1619</div></div><div class="tech-name">Cloud Storage Object Discovery</div></div>
+<div class="tech cov-none" data-techid="T1613" title="T1613 — Container and Resource Discovery"><div class="tech-header"><div class="tech-id">T1613</div></div><div class="tech-name">Container and Resource Discovery</div></div>
+<div class="tech cov-none" data-techid="T1622" title="T1622 — Debugger Evasion"><div class="tech-header"><div class="tech-id">T1622</div></div><div class="tech-name">Debugger Evasion</div></div>
+<div class="tech cov-none" data-techid="T1652" title="T1652 — Device Driver Discovery"><div class="tech-header"><div class="tech-id">T1652</div></div><div class="tech-name">Device Driver Discovery</div></div>
+<div class="tech cov-none" data-techid="T1482" title="T1482 — Domain Trust Discovery"><div class="tech-header"><div class="tech-id">T1482</div></div><div class="tech-name">Domain Trust Discovery</div></div>
+<div class="tech cov-none" data-techid="T1083" title="T1083 — File and Directory Discovery"><div class="tech-header"><div class="tech-id">T1083</div></div><div class="tech-name">File and Directory Discovery</div></div>
+<div class="tech cov-none" data-techid="T1615" title="T1615 — Group Policy Discovery"><div class="tech-header"><div class="tech-id">T1615</div></div><div class="tech-name">Group Policy Discovery</div></div>
+<div class="tech cov-none" data-techid="T1654" title="T1654 — Log Enumeration"><div class="tech-header"><div class="tech-id">T1654</div></div><div class="tech-name">Log Enumeration</div></div>
+<div class="tech cov-sig" data-techid="T1046" title="T1046 — Network Service Discovery"><div class="tech-header"><div class="tech-id">T1046</div></div><div class="tech-name">Network Service Discovery</div></div>
+<div class="tech cov-nsig" data-techid="T1135" title="T1135 — Network Share Discovery"><div class="tech-header"><div class="tech-id">T1135</div></div><div class="tech-name">Network Share Discovery</div></div>
+<div class="tech cov-none" data-techid="T1040" title="T1040 — Network Sniffing"><div class="tech-header"><div class="tech-id">T1040</div></div><div class="tech-name">Network Sniffing</div></div>
+<div class="tech cov-none" data-techid="T1201" title="T1201 — Password Policy Discovery"><div class="tech-header"><div class="tech-id">T1201</div></div><div class="tech-name">Password Policy Discovery</div></div>
+<div class="tech cov-none" data-techid="T1120" title="T1120 — Peripheral Device Discovery"><div class="tech-header"><div class="tech-id">T1120</div></div><div class="tech-name">Peripheral Device Discovery</div></div>
+<div class="tech cov-none" data-techid="T1069" title="T1069 — Permission Groups Discovery"><div class="tech-header"><div class="tech-id">T1069</div><span class="sub-badge">0/3</span></div><div class="tech-name">Permission Groups Discovery</div><div class="subs"><div class="sub-tech cov-none" title="T1069.001 — Local Groups"><span class="sub-id">T1069.001</span><span class="sub-name">Local Groups</span></div><div class="sub-tech cov-none" title="T1069.002 — Domain Groups"><span class="sub-id">T1069.002</span><span class="sub-name">Domain Groups</span></div><div class="sub-tech cov-none" title="T1069.003 — Cloud Groups"><span class="sub-id">T1069.003</span><span class="sub-name">Cloud Groups</span></div></div></div>
+<div class="tech cov-none" data-techid="T1057" title="T1057 — Process Discovery"><div class="tech-header"><div class="tech-id">T1057</div></div><div class="tech-name">Process Discovery</div></div>
+<div class="tech cov-none" data-techid="T1012" title="T1012 — Query Registry"><div class="tech-header"><div class="tech-id">T1012</div></div><div class="tech-name">Query Registry</div></div>
+<div class="tech cov-sig" data-techid="T1018" title="T1018 — Remote System Discovery"><div class="tech-header"><div class="tech-id">T1018</div></div><div class="tech-name">Remote System Discovery</div></div>
+<div class="tech cov-none" data-techid="T1518" title="T1518 — Software Discovery"><div class="tech-header"><div class="tech-id">T1518</div><span class="sub-badge">0/1</span></div><div class="tech-name">Software Discovery</div><div class="subs"><div class="sub-tech cov-none" title="T1518.001 — Security Software Discovery"><span class="sub-id">T1518.001</span><span class="sub-name">Security Software Discovery</span></div></div></div>
+<div class="tech cov-none" data-techid="T1082" title="T1082 — System Information Discovery"><div class="tech-header"><div class="tech-id">T1082</div></div><div class="tech-name">System Information Discovery</div></div>
+<div class="tech cov-none" data-techid="T1614" title="T1614 — System Location Discovery"><div class="tech-header"><div class="tech-id">T1614</div><span class="sub-badge">0/1</span></div><div class="tech-name">System Location Discovery</div><div class="subs"><div class="sub-tech cov-none" title="T1614.001 — System Language Discovery"><span class="sub-id">T1614.001</span><span class="sub-name">System Language Discovery</span></div></div></div>
+<div class="tech cov-none" data-techid="T1016" title="T1016 — System Network Configuration Discovery"><div class="tech-header"><div class="tech-id">T1016</div><span class="sub-badge">0/2</span></div><div class="tech-name">System Network Configuration Discovery</div><div class="subs"><div class="sub-tech cov-none" title="T1016.001 — Internet Connection Discovery"><span class="sub-id">T1016.001</span><span class="sub-name">Internet Connection Discovery</span></div><div class="sub-tech cov-none" title="T1016.002 — Wi-Fi Discovery"><span class="sub-id">T1016.002</span><span class="sub-name">Wi-Fi Discovery</span></div></div></div>
+<div class="tech cov-none" data-techid="T1049" title="T1049 — System Network Connections Discovery"><div class="tech-header"><div class="tech-id">T1049</div></div><div class="tech-name">System Network Connections Discovery</div></div>
+<div class="tech cov-none" data-techid="T1033" title="T1033 — System Owner/User Discovery"><div class="tech-header"><div class="tech-id">T1033</div></div><div class="tech-name">System Owner/User Discovery</div></div>
+<div class="tech cov-none" data-techid="T1007" title="T1007 — System Service Discovery"><div class="tech-header"><div class="tech-id">T1007</div></div><div class="tech-name">System Service Discovery</div></div>
+<div class="tech cov-none" data-techid="T1124" title="T1124 — System Time Discovery"><div class="tech-header"><div class="tech-id">T1124</div></div><div class="tech-name">System Time Discovery</div></div>
+<div class="tech cov-none" data-techid="T1497" title="T1497 — Virtualization/Sandbox Evasion"><div class="tech-header"><div class="tech-id">T1497</div></div><div class="tech-name">Virtualization/Sandbox Evasion</div></div>
+            </div>
+        </div>
+        
+
+        <div class="tactic-col">
+            <div class="tactic-header">
+                <div class="tactic-num">10</div>
+                <div class="tactic-meta">
+                    <div class="tactic-id">TA0008</div>
+                    <div class="tactic-name-en">Lateral Movement</div>
+                </div>
+                <div class="tactic-name-ru">горизонтальное перемещение</div>
+                <div class="tactic-count">9 техник</div>
+            </div>
+            <div class="tactic-body">
+                <div class="tech cov-nsig" data-techid="T1210" title="T1210 — Exploitation of Remote Services"><div class="tech-header"><div class="tech-id">T1210</div></div><div class="tech-name">Exploitation of Remote Services</div></div>
+<div class="tech cov-none" data-techid="T1534" title="T1534 — Internal Spearphishing"><div class="tech-header"><div class="tech-id">T1534</div></div><div class="tech-name">Internal Spearphishing</div></div>
+<div class="tech cov-nsig" data-techid="T1570" title="T1570 — Lateral Tool Transfer"><div class="tech-header"><div class="tech-id">T1570</div></div><div class="tech-name">Lateral Tool Transfer</div></div>
+<div class="tech cov-none" data-techid="T1563" title="T1563 — Remote Service Session Hijacking"><div class="tech-header"><div class="tech-id">T1563</div><span class="sub-badge">0/2</span></div><div class="tech-name">Remote Service Session Hijacking</div><div class="subs"><div class="sub-tech cov-none" title="T1563.001 — SSH Hijacking"><span class="sub-id">T1563.001</span><span class="sub-name">SSH Hijacking</span></div><div class="sub-tech cov-none" title="T1563.002 — RDP Hijacking"><span class="sub-id">T1563.002</span><span class="sub-name">RDP Hijacking</span></div></div></div>
+<div class="tech cov-part" data-techid="T1021" title="T1021 — Remote Services"><div class="tech-header"><div class="tech-id">T1021</div><span class="sub-badge">5/8</span></div><div class="tech-name">Remote Services</div><div class="subs"><div class="sub-tech cov-sig" title="T1021.001 — Remote Desktop Protocol"><span class="sub-id">T1021.001</span><span class="sub-name">Remote Desktop Protocol</span></div><div class="sub-tech cov-nsig" title="T1021.002 — SMB/Windows Admin Shares"><span class="sub-id">T1021.002</span><span class="sub-name">SMB/Windows Admin Shares</span></div><div class="sub-tech cov-nsig" title="T1021.003 — Distributed Component Object Model"><span class="sub-id">T1021.003</span><span class="sub-name">Distributed Component Object Model</span></div><div class="sub-tech cov-sig" title="T1021.004 — SSH"><span class="sub-id">T1021.004</span><span class="sub-name">SSH</span></div><div class="sub-tech cov-sig" title="T1021.005 — VNC"><span class="sub-id">T1021.005</span><span class="sub-name">VNC</span></div><div class="sub-tech cov-none" title="T1021.006 — Windows Remote Management"><span class="sub-id">T1021.006</span><span class="sub-name">Windows Remote Management</span></div><div class="sub-tech cov-none" title="T1021.007 — Cloud Services"><span class="sub-id">T1021.007</span><span class="sub-name">Cloud Services</span></div><div class="sub-tech cov-none" title="T1021.008 — Direct Cloud VM Connections"><span class="sub-id">T1021.008</span><span class="sub-name">Direct Cloud VM Connections</span></div></div></div>
+<div class="tech cov-none" data-techid="T1091" title="T1091 — Replication Through Removable Media"><div class="tech-header"><div class="tech-id">T1091</div></div><div class="tech-name">Replication Through Removable Media</div></div>
+<div class="tech cov-none" data-techid="T1072" title="T1072 — Software Deployment Tools"><div class="tech-header"><div class="tech-id">T1072</div></div><div class="tech-name">Software Deployment Tools</div></div>
+<div class="tech cov-none" data-techid="T1080" title="T1080 — Taint Shared Content"><div class="tech-header"><div class="tech-id">T1080</div></div><div class="tech-name">Taint Shared Content</div></div>
+<div class="tech cov-none" data-techid="T1550" title="T1550 — Use Alternate Authentication Material"><div class="tech-header"><div class="tech-id">T1550</div></div><div class="tech-name">Use Alternate Authentication Material</div></div>
+            </div>
+        </div>
+        
+
+        <div class="tactic-col">
+            <div class="tactic-header">
+                <div class="tactic-num">11</div>
+                <div class="tactic-meta">
+                    <div class="tactic-id">TA0009</div>
+                    <div class="tactic-name-en">Collection</div>
+                </div>
+                <div class="tactic-name-ru">сбор данных</div>
+                <div class="tactic-count">17 техник</div>
+            </div>
+            <div class="tactic-body">
+                <div class="tech cov-nsig" data-techid="T1557" title="T1557 — Adversary-in-the-Middle"><div class="tech-header"><div class="tech-id">T1557</div></div><div class="tech-name">Adversary-in-the-Middle</div></div>
+<div class="tech cov-none" data-techid="T1560" title="T1560 — Archive Collected Data"><div class="tech-header"><div class="tech-id">T1560</div><span class="sub-badge">0/3</span></div><div class="tech-name">Archive Collected Data</div><div class="subs"><div class="sub-tech cov-none" title="T1560.001 — Archive via Utility"><span class="sub-id">T1560.001</span><span class="sub-name">Archive via Utility</span></div><div class="sub-tech cov-none" title="T1560.002 — Archive via Library"><span class="sub-id">T1560.002</span><span class="sub-name">Archive via Library</span></div><div class="sub-tech cov-none" title="T1560.003 — Archive via Custom Method"><span class="sub-id">T1560.003</span><span class="sub-name">Archive via Custom Method</span></div></div></div>
+<div class="tech cov-none" data-techid="T1123" title="T1123 — Audio Capture"><div class="tech-header"><div class="tech-id">T1123</div></div><div class="tech-name">Audio Capture</div></div>
+<div class="tech cov-none" data-techid="T1119" title="T1119 — Automated Collection"><div class="tech-header"><div class="tech-id">T1119</div></div><div class="tech-name">Automated Collection</div></div>
+<div class="tech cov-none" data-techid="T1185" title="T1185 — Browser Session Hijacking"><div class="tech-header"><div class="tech-id">T1185</div></div><div class="tech-name">Browser Session Hijacking</div></div>
+<div class="tech cov-none" data-techid="T1115" title="T1115 — Clipboard Data"><div class="tech-header"><div class="tech-id">T1115</div></div><div class="tech-name">Clipboard Data</div></div>
+<div class="tech cov-none" data-techid="T1530" title="T1530 — Data from Cloud Storage"><div class="tech-header"><div class="tech-id">T1530</div></div><div class="tech-name">Data from Cloud Storage</div></div>
+<div class="tech cov-none" data-techid="T1602" title="T1602 — Data from Configuration Repository"><div class="tech-header"><div class="tech-id">T1602</div><span class="sub-badge">0/2</span></div><div class="tech-name">Data from Configuration Repository</div><div class="subs"><div class="sub-tech cov-none" title="T1602.001 — SNMP (MIB Dump)"><span class="sub-id">T1602.001</span><span class="sub-name">SNMP (MIB Dump)</span></div><div class="sub-tech cov-none" title="T1602.002 — Network Device Configuration Dump"><span class="sub-id">T1602.002</span><span class="sub-name">Network Device Configuration Dump</span></div></div></div>
+<div class="tech cov-none" data-techid="T1213" title="T1213 — Data from Information Repositories"><div class="tech-header"><div class="tech-id">T1213</div><span class="sub-badge">0/5</span></div><div class="tech-name">Data from Information Repositories</div><div class="subs"><div class="sub-tech cov-none" title="T1213.001 — Confluence"><span class="sub-id">T1213.001</span><span class="sub-name">Confluence</span></div><div class="sub-tech cov-none" title="T1213.002 — SharePoint"><span class="sub-id">T1213.002</span><span class="sub-name">SharePoint</span></div><div class="sub-tech cov-none" title="T1213.003 — Code Repositories"><span class="sub-id">T1213.003</span><span class="sub-name">Code Repositories</span></div><div class="sub-tech cov-none" title="T1213.004 — Customer Relationship Management Software"><span class="sub-id">T1213.004</span><span class="sub-name">Customer Relationship Management Software</span></div><div class="sub-tech cov-none" title="T1213.005 — Messaging Applications"><span class="sub-id">T1213.005</span><span class="sub-name">Messaging Applications</span></div></div></div>
+<div class="tech cov-none" data-techid="T1005" title="T1005 — Data from Local System"><div class="tech-header"><div class="tech-id">T1005</div></div><div class="tech-name">Data from Local System</div></div>
+<div class="tech cov-none" data-techid="T1039" title="T1039 — Data from Network Shared Drive"><div class="tech-header"><div class="tech-id">T1039</div></div><div class="tech-name">Data from Network Shared Drive</div></div>
+<div class="tech cov-none" data-techid="T1025" title="T1025 — Data from Removable Media"><div class="tech-header"><div class="tech-id">T1025</div></div><div class="tech-name">Data from Removable Media</div></div>
+<div class="tech cov-none" data-techid="T1074" title="T1074 — Data Staged"><div class="tech-header"><div class="tech-id">T1074</div><span class="sub-badge">0/2</span></div><div class="tech-name">Data Staged</div><div class="subs"><div class="sub-tech cov-none" title="T1074.001 — Local Data Staging"><span class="sub-id">T1074.001</span><span class="sub-name">Local Data Staging</span></div><div class="sub-tech cov-none" title="T1074.002 — Remote Data Staging"><span class="sub-id">T1074.002</span><span class="sub-name">Remote Data Staging</span></div></div></div>
+<div class="tech cov-none" data-techid="T1114" title="T1114 — Email Collection"><div class="tech-header"><div class="tech-id">T1114</div><span class="sub-badge">0/3</span></div><div class="tech-name">Email Collection</div><div class="subs"><div class="sub-tech cov-none" title="T1114.001 — Local Email Collection"><span class="sub-id">T1114.001</span><span class="sub-name">Local Email Collection</span></div><div class="sub-tech cov-none" title="T1114.002 — Remote Email Collection"><span class="sub-id">T1114.002</span><span class="sub-name">Remote Email Collection</span></div><div class="sub-tech cov-none" title="T1114.003 — Email Forwarding Rule"><span class="sub-id">T1114.003</span><span class="sub-name">Email Forwarding Rule</span></div></div></div>
+<div class="tech cov-none" data-techid="T1056" title="T1056 — Input Capture"><div class="tech-header"><div class="tech-id">T1056</div></div><div class="tech-name">Input Capture</div></div>
+<div class="tech cov-none" data-techid="T1113" title="T1113 — Screen Capture"><div class="tech-header"><div class="tech-id">T1113</div></div><div class="tech-name">Screen Capture</div></div>
+<div class="tech cov-none" data-techid="T1125" title="T1125 — Video Capture"><div class="tech-header"><div class="tech-id">T1125</div></div><div class="tech-name">Video Capture</div></div>
+            </div>
+        </div>
+        
+
+        <div class="tactic-col">
+            <div class="tactic-header">
+                <div class="tactic-num">12</div>
+                <div class="tactic-meta">
+                    <div class="tactic-id">TA0011</div>
+                    <div class="tactic-name-en">Command and Control</div>
+                </div>
+                <div class="tactic-name-ru">управление и контроль</div>
+                <div class="tactic-count">18 техник</div>
+            </div>
+            <div class="tactic-body">
+                <div class="tech cov-part" data-techid="T1071" title="T1071 — Application Layer Protocol"><div class="tech-header"><div class="tech-id">T1071</div><span class="sub-badge">4/5</span></div><div class="tech-name">Application Layer Protocol</div><div class="subs"><div class="sub-tech cov-sig" title="T1071.001 — Web Protocols"><span class="sub-id">T1071.001</span><span class="sub-name">Web Protocols</span></div><div class="sub-tech cov-sig" title="T1071.002 — File Transfer Protocols"><span class="sub-id">T1071.002</span><span class="sub-name">File Transfer Protocols</span></div><div class="sub-tech cov-sig" title="T1071.003 — Mail Protocols"><span class="sub-id">T1071.003</span><span class="sub-name">Mail Protocols</span></div><div class="sub-tech cov-sig" title="T1071.004 — DNS"><span class="sub-id">T1071.004</span><span class="sub-name">DNS</span></div><div class="sub-tech cov-none" title="T1071.005 — Publish/Subscribe Protocols"><span class="sub-id">T1071.005</span><span class="sub-name">Publish/Subscribe Protocols</span></div></div></div>
+<div class="tech cov-none" data-techid="T1092" title="T1092 — Communication Through Removable Media"><div class="tech-header"><div class="tech-id">T1092</div></div><div class="tech-name">Communication Through Removable Media</div></div>
+<div class="tech cov-sig" data-techid="T1659" title="T1659 — Content Injection"><div class="tech-header"><div class="tech-id">T1659</div></div><div class="tech-name">Content Injection</div></div>
+<div class="tech cov-sig" data-techid="T1132" title="T1132 — Data Encoding"><div class="tech-header"><div class="tech-id">T1132</div><span class="sub-badge">2/2</span></div><div class="tech-name">Data Encoding</div><div class="subs"><div class="sub-tech cov-sig" title="T1132.001 — Standard Encoding"><span class="sub-id">T1132.001</span><span class="sub-name">Standard Encoding</span></div><div class="sub-tech cov-sig" title="T1132.002 — Non-Standard Encoding"><span class="sub-id">T1132.002</span><span class="sub-name">Non-Standard Encoding</span></div></div></div>
+<div class="tech cov-part" data-techid="T1001" title="T1001 — Data Obfuscation"><div class="tech-header"><div class="tech-id">T1001</div><span class="sub-badge">2/3</span></div><div class="tech-name">Data Obfuscation</div><div class="subs"><div class="sub-tech cov-sig" title="T1001.001 — Junk Data"><span class="sub-id">T1001.001</span><span class="sub-name">Junk Data</span></div><div class="sub-tech cov-none" title="T1001.002 — Steganography"><span class="sub-id">T1001.002</span><span class="sub-name">Steganography</span></div><div class="sub-tech cov-sig" title="T1001.003 — Protocol or Service Impersonation"><span class="sub-id">T1001.003</span><span class="sub-name">Protocol or Service Impersonation</span></div></div></div>
+<div class="tech cov-part" data-techid="T1568" title="T1568 — Dynamic Resolution"><div class="tech-header"><div class="tech-id">T1568</div><span class="sub-badge">2/3</span></div><div class="tech-name">Dynamic Resolution</div><div class="subs"><div class="sub-tech cov-sig" title="T1568.001 — Fast Flux DNS"><span class="sub-id">T1568.001</span><span class="sub-name">Fast Flux DNS</span></div><div class="sub-tech cov-nsig" title="T1568.002 — Domain Generation Algorithms"><span class="sub-id">T1568.002</span><span class="sub-name">Domain Generation Algorithms</span></div><div class="sub-tech cov-none" title="T1568.003 — DNS Calculation"><span class="sub-id">T1568.003</span><span class="sub-name">DNS Calculation</span></div></div></div>
+<div class="tech cov-sig" data-techid="T1573" title="T1573 — Encrypted Channel"><div class="tech-header"><div class="tech-id">T1573</div><span class="sub-badge">2/2</span></div><div class="tech-name">Encrypted Channel</div><div class="subs"><div class="sub-tech cov-sig" title="T1573.001 — Symmetric Cryptography"><span class="sub-id">T1573.001</span><span class="sub-name">Symmetric Cryptography</span></div><div class="sub-tech cov-sig" title="T1573.002 — Asymmetric Cryptography"><span class="sub-id">T1573.002</span><span class="sub-name">Asymmetric Cryptography</span></div></div></div>
+<div class="tech cov-sig" data-techid="T1008" title="T1008 — Fallback Channels"><div class="tech-header"><div class="tech-id">T1008</div></div><div class="tech-name">Fallback Channels</div></div>
+<div class="tech cov-sig" data-techid="T1665" title="T1665 — Hide Infrastructure"><div class="tech-header"><div class="tech-id">T1665</div></div><div class="tech-name">Hide Infrastructure</div></div>
+<div class="tech cov-sig" data-techid="T1105" title="T1105 — Ingress Tool Transfer"><div class="tech-header"><div class="tech-id">T1105</div></div><div class="tech-name">Ingress Tool Transfer</div></div>
+<div class="tech cov-sig" data-techid="T1104" title="T1104 — Multi-Stage Channels"><div class="tech-header"><div class="tech-id">T1104</div></div><div class="tech-name">Multi-Stage Channels</div></div>
+<div class="tech cov-nsig" data-techid="T1095" title="T1095 — Non-Application Layer Protocol"><div class="tech-header"><div class="tech-id">T1095</div></div><div class="tech-name">Non-Application Layer Protocol</div></div>
+<div class="tech cov-sig" data-techid="T1571" title="T1571 — Non-Standard Port"><div class="tech-header"><div class="tech-id">T1571</div></div><div class="tech-name">Non-Standard Port</div></div>
+<div class="tech cov-sig" data-techid="T1572" title="T1572 — Protocol Tunneling"><div class="tech-header"><div class="tech-id">T1572</div></div><div class="tech-name">Protocol Tunneling</div></div>
+<div class="tech cov-sig" data-techid="T1090" title="T1090 — Proxy"><div class="tech-header"><div class="tech-id">T1090</div><span class="sub-badge">4/4</span></div><div class="tech-name">Proxy</div><div class="subs"><div class="sub-tech cov-sig" title="T1090.001 — Internal Proxy"><span class="sub-id">T1090.001</span><span class="sub-name">Internal Proxy</span></div><div class="sub-tech cov-sig" title="T1090.002 — External Proxy"><span class="sub-id">T1090.002</span><span class="sub-name">External Proxy</span></div><div class="sub-tech cov-sig" title="T1090.003 — Multi-hop Proxy"><span class="sub-id">T1090.003</span><span class="sub-name">Multi-hop Proxy</span></div><div class="sub-tech cov-sig" title="T1090.004 — Domain Fronting"><span class="sub-id">T1090.004</span><span class="sub-name">Domain Fronting</span></div></div></div>
+<div class="tech cov-sig" data-techid="T1219" title="T1219 — Remote Access Software"><div class="tech-header"><div class="tech-id">T1219</div></div><div class="tech-name">Remote Access Software</div></div>
+<div class="tech cov-none" data-techid="T1205" title="T1205 — Traffic Signaling"><div class="tech-header"><div class="tech-id">T1205</div></div><div class="tech-name">Traffic Signaling</div></div>
+<div class="tech cov-sig" data-techid="T1102" title="T1102 — Web Service"><div class="tech-header"><div class="tech-id">T1102</div><span class="sub-badge">3/3</span></div><div class="tech-name">Web Service</div><div class="subs"><div class="sub-tech cov-sig" title="T1102.001 — Dead Drop Resolver"><span class="sub-id">T1102.001</span><span class="sub-name">Dead Drop Resolver</span></div><div class="sub-tech cov-sig" title="T1102.002 — Bidirectional Communication"><span class="sub-id">T1102.002</span><span class="sub-name">Bidirectional Communication</span></div><div class="sub-tech cov-sig" title="T1102.003 — One-Way Communication"><span class="sub-id">T1102.003</span><span class="sub-name">One-Way Communication</span></div></div></div>
+            </div>
+        </div>
+        
+
+        <div class="tactic-col">
+            <div class="tactic-header">
+                <div class="tactic-num">13</div>
+                <div class="tactic-meta">
+                    <div class="tactic-id">TA0010</div>
+                    <div class="tactic-name-en">Exfiltration</div>
+                </div>
+                <div class="tactic-name-ru">эксфильтрация</div>
+                <div class="tactic-count">9 техник</div>
+            </div>
+            <div class="tactic-body">
+                <div class="tech cov-none" data-techid="T1020" title="T1020 — Automated Exfiltration"><div class="tech-header"><div class="tech-id">T1020</div><span class="sub-badge">0/1</span></div><div class="tech-name">Automated Exfiltration</div><div class="subs"><div class="sub-tech cov-none" title="T1020.001 — Traffic Duplication"><span class="sub-id">T1020.001</span><span class="sub-name">Traffic Duplication</span></div></div></div>
+<div class="tech cov-none" data-techid="T1030" title="T1030 — Data Transfer Size Limits"><div class="tech-header"><div class="tech-id">T1030</div></div><div class="tech-name">Data Transfer Size Limits</div></div>
+<div class="tech cov-part" data-techid="T1048" title="T1048 — Exfiltration Over Alternative Protocol"><div class="tech-header"><div class="tech-id">T1048</div><span class="sub-badge">1/3</span></div><div class="tech-name">Exfiltration Over Alternative Protocol</div><div class="subs"><div class="sub-tech cov-none" title="T1048.001 — Exfiltration Over Symmetric Encrypted Non-C2 Protocol"><span class="sub-id">T1048.001</span><span class="sub-name">Exfiltration Over Symmetric Encrypted Non-C2 Protocol</span></div><div class="sub-tech cov-none" title="T1048.002 — Exfiltration Over Asymmetric Encrypted Non-C2 Protocol"><span class="sub-id">T1048.002</span><span class="sub-name">Exfiltration Over Asymmetric Encrypted Non-C2 Protocol</span></div><div class="sub-tech cov-nsig" title="T1048.003 — Exfiltration Over Unencrypted Non-C2 Protocol"><span class="sub-id">T1048.003</span><span class="sub-name">Exfiltration Over Unencrypted Non-C2 Protocol</span></div></div></div>
+<div class="tech cov-sig" data-techid="T1041" title="T1041 — Exfiltration Over C2 Channel"><div class="tech-header"><div class="tech-id">T1041</div></div><div class="tech-name">Exfiltration Over C2 Channel</div></div>
+<div class="tech cov-none" data-techid="T1011" title="T1011 — Exfiltration Over Other Network Medium"><div class="tech-header"><div class="tech-id">T1011</div><span class="sub-badge">0/1</span></div><div class="tech-name">Exfiltration Over Other Network Medium</div><div class="subs"><div class="sub-tech cov-none" title="T1011.001 — Exfiltration Over Bluetooth"><span class="sub-id">T1011.001</span><span class="sub-name">Exfiltration Over Bluetooth</span></div></div></div>
+<div class="tech cov-none" data-techid="T1052" title="T1052 — Exfiltration Over Physical Medium"><div class="tech-header"><div class="tech-id">T1052</div><span class="sub-badge">0/1</span></div><div class="tech-name">Exfiltration Over Physical Medium</div><div class="subs"><div class="sub-tech cov-none" title="T1052.001 — Exfiltration over USB"><span class="sub-id">T1052.001</span><span class="sub-name">Exfiltration over USB</span></div></div></div>
+<div class="tech cov-part" data-techid="T1567" title="T1567 — Exfiltration Over Web Service"><div class="tech-header"><div class="tech-id">T1567</div><span class="sub-badge">3/4</span></div><div class="tech-name">Exfiltration Over Web Service</div><div class="subs"><div class="sub-tech cov-sig" title="T1567.001 — Exfiltration to Code Repository"><span class="sub-id">T1567.001</span><span class="sub-name">Exfiltration to Code Repository</span></div><div class="sub-tech cov-sig" title="T1567.002 — Exfiltration to Cloud Storage"><span class="sub-id">T1567.002</span><span class="sub-name">Exfiltration to Cloud Storage</span></div><div class="sub-tech cov-sig" title="T1567.003 — Exfiltration to Text Storage Sites"><span class="sub-id">T1567.003</span><span class="sub-name">Exfiltration to Text Storage Sites</span></div><div class="sub-tech cov-none" title="T1567.004 — Exfiltration Over Webhook"><span class="sub-id">T1567.004</span><span class="sub-name">Exfiltration Over Webhook</span></div></div></div>
+<div class="tech cov-none" data-techid="T1029" title="T1029 — Scheduled Transfer"><div class="tech-header"><div class="tech-id">T1029</div></div><div class="tech-name">Scheduled Transfer</div></div>
+<div class="tech cov-none" data-techid="T1537" title="T1537 — Transfer Data to Cloud Account"><div class="tech-header"><div class="tech-id">T1537</div></div><div class="tech-name">Transfer Data to Cloud Account</div></div>
+            </div>
+        </div>
+        
+
+        <div class="tactic-col">
+            <div class="tactic-header">
+                <div class="tactic-num">14</div>
+                <div class="tactic-meta">
+                    <div class="tactic-id">TA0040</div>
+                    <div class="tactic-name-en">Impact</div>
+                </div>
+                <div class="tactic-name-ru">воздействие</div>
+                <div class="tactic-count">14 техник</div>
+            </div>
+            <div class="tactic-body">
+                <div class="tech cov-none" data-techid="T1531" title="T1531 — Account Access Removal"><div class="tech-header"><div class="tech-id">T1531</div></div><div class="tech-name">Account Access Removal</div></div>
+<div class="tech cov-none" data-techid="T1485" title="T1485 — Data Destruction"><div class="tech-header"><div class="tech-id">T1485</div></div><div class="tech-name">Data Destruction</div></div>
+<div class="tech cov-sig" data-techid="T1486" title="T1486 — Data Encrypted for Impact"><div class="tech-header"><div class="tech-id">T1486</div></div><div class="tech-name">Data Encrypted for Impact</div></div>
+<div class="tech cov-none" data-techid="T1565" title="T1565 — Data Manipulation"><div class="tech-header"><div class="tech-id">T1565</div><span class="sub-badge">0/3</span></div><div class="tech-name">Data Manipulation</div><div class="subs"><div class="sub-tech cov-none" title="T1565.001 — Stored Data Manipulation"><span class="sub-id">T1565.001</span><span class="sub-name">Stored Data Manipulation</span></div><div class="sub-tech cov-none" title="T1565.002 — Transmitted Data Manipulation"><span class="sub-id">T1565.002</span><span class="sub-name">Transmitted Data Manipulation</span></div><div class="sub-tech cov-none" title="T1565.003 — Runtime Data Manipulation"><span class="sub-id">T1565.003</span><span class="sub-name">Runtime Data Manipulation</span></div></div></div>
+<div class="tech cov-none" data-techid="T1491" title="T1491 — Defacement"><div class="tech-header"><div class="tech-id">T1491</div><span class="sub-badge">0/2</span></div><div class="tech-name">Defacement</div><div class="subs"><div class="sub-tech cov-none" title="T1491.001 — Internal Defacement"><span class="sub-id">T1491.001</span><span class="sub-name">Internal Defacement</span></div><div class="sub-tech cov-none" title="T1491.002 — External Defacement"><span class="sub-id">T1491.002</span><span class="sub-name">External Defacement</span></div></div></div>
+<div class="tech cov-none" data-techid="T1561" title="T1561 — Disk Wipe"><div class="tech-header"><div class="tech-id">T1561</div><span class="sub-badge">0/2</span></div><div class="tech-name">Disk Wipe</div><div class="subs"><div class="sub-tech cov-none" title="T1561.001 — Disk Content Wipe"><span class="sub-id">T1561.001</span><span class="sub-name">Disk Content Wipe</span></div><div class="sub-tech cov-none" title="T1561.002 — Disk Structure Wipe"><span class="sub-id">T1561.002</span><span class="sub-name">Disk Structure Wipe</span></div></div></div>
+<div class="tech cov-sig" data-techid="T1499" title="T1499 — Endpoint Denial of Service"><div class="tech-header"><div class="tech-id">T1499</div><span class="sub-badge">4/4</span></div><div class="tech-name">Endpoint Denial of Service</div><div class="subs"><div class="sub-tech cov-sig" title="T1499.001 — OS Exhaustion Flood"><span class="sub-id">T1499.001</span><span class="sub-name">OS Exhaustion Flood</span></div><div class="sub-tech cov-sig" title="T1499.002 — Service Exhaustion Flood"><span class="sub-id">T1499.002</span><span class="sub-name">Service Exhaustion Flood</span></div><div class="sub-tech cov-sig" title="T1499.003 — Application Exhaustion Flood"><span class="sub-id">T1499.003</span><span class="sub-name">Application Exhaustion Flood</span></div><div class="sub-tech cov-sig" title="T1499.004 — Application or System Exploitation"><span class="sub-id">T1499.004</span><span class="sub-name">Application or System Exploitation</span></div></div></div>
+<div class="tech cov-none" data-techid="T1657" title="T1657 — Financial Theft"><div class="tech-header"><div class="tech-id">T1657</div></div><div class="tech-name">Financial Theft</div></div>
+<div class="tech cov-none" data-techid="T1495" title="T1495 — Firmware Corruption"><div class="tech-header"><div class="tech-id">T1495</div></div><div class="tech-name">Firmware Corruption</div></div>
+<div class="tech cov-none" data-techid="T1490" title="T1490 — Inhibit System Recovery"><div class="tech-header"><div class="tech-id">T1490</div></div><div class="tech-name">Inhibit System Recovery</div></div>
+<div class="tech cov-sig" data-techid="T1498" title="T1498 — Network Denial of Service"><div class="tech-header"><div class="tech-id">T1498</div><span class="sub-badge">2/2</span></div><div class="tech-name">Network Denial of Service</div><div class="subs"><div class="sub-tech cov-sig" title="T1498.001 — Direct Network Flood"><span class="sub-id">T1498.001</span><span class="sub-name">Direct Network Flood</span></div><div class="sub-tech cov-sig" title="T1498.002 — Reflection Amplification"><span class="sub-id">T1498.002</span><span class="sub-name">Reflection Amplification</span></div></div></div>
+<div class="tech cov-part" data-techid="T1496" title="T1496 — Resource Hijacking"><div class="tech-header"><div class="tech-id">T1496</div><span class="sub-badge">1/4</span></div><div class="tech-name">Resource Hijacking</div><div class="subs"><div class="sub-tech cov-sig" title="T1496.001 — Compute Hijacking"><span class="sub-id">T1496.001</span><span class="sub-name">Compute Hijacking</span></div><div class="sub-tech cov-none" title="T1496.002 — Bandwidth Hijacking"><span class="sub-id">T1496.002</span><span class="sub-name">Bandwidth Hijacking</span></div><div class="sub-tech cov-none" title="T1496.003 — SMS Pumping"><span class="sub-id">T1496.003</span><span class="sub-name">SMS Pumping</span></div><div class="sub-tech cov-none" title="T1496.004 — Cloud Service Hijacking"><span class="sub-id">T1496.004</span><span class="sub-name">Cloud Service Hijacking</span></div></div></div>
+<div class="tech cov-none" data-techid="T1489" title="T1489 — Service Stop"><div class="tech-header"><div class="tech-id">T1489</div></div><div class="tech-name">Service Stop</div></div>
+<div class="tech cov-none" data-techid="T1529" title="T1529 — System Shutdown/Reboot"><div class="tech-header"><div class="tech-id">T1529</div></div><div class="tech-name">System Shutdown/Reboot</div></div>
+            </div>
+        </div>
+        
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    <div class="footer-grid">
+        <div class="footer-main">
+            <p>Страница отражает покрытие матрицы <a href="https://attack.mitre.org/matrices/enterprise/" target="_blank" rel="noopener">MITRE ATT&amp;CK Enterprise</a> на основе действующего набора правил детектирования и моделей машинного обучения UDV NTA.</p>
+            <p>Оценка ориентировочная: отдельные техники могут получать дополнительное косвенное покрытие через корреляцию событий и проактивный поиск угроз.</p>
+        </div>
+        <div class="footer-col">
+            <div class="footer-col-title">UDV NTA</div>
+            <ul>
+                <li><a href="https://udv.group/products/nta/" target="_blank" rel="noopener">о продукте</a></li>
+                <li><a href="https://udv.group/products/nta/#demo" target="_blank" rel="noopener">запросить демо</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <div class="footer-col-title">UDV Group</div>
+            <ul>
+                <li><a href="https://udv.group/" target="_blank" rel="noopener">главная</a></li>
+                <li><a href="https://udv.group/products/" target="_blank" rel="noopener">все продукты</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        © UDV Group, 2026. Все права защищены.
+    </div>
+</div>
+
+</body>
+</html>
